@@ -52,16 +52,15 @@ const theme = createTheme({
 });
 
 // =================== LIENS ===================
-const BACKEND_URL = 'http://localhost:4001';
-const APP_URL = 'http://172.16.1.98:50000/';
-const GRAFANA_URL = 'http://172.16.1.98:3000/d/adlddrl/monitoring-des-stromverbrauchs-e28093-me180e2809c?orgId=1&from=now-15m&to=now&timezone=browser&var-kanal=CH16&refresh=5s';
-const CONFIG_URL = 'http://172.16.1.98:50000?view=config';
+const BACKEND_URL = 'http://192.168.1.20:4001';
+const APP_URL = 'http://192.168.1.20:50000/';
+const GRAFANA_URL = 'http://192.168.1.20:3000/d/adlddrl/monitoring-des-stromverbrauchs-e28093-me180e2809c?orgId=1&from=now-15m&to=now&timezone=browser&var-kanal=CH16&refresh=5s';
+const CONFIG_URL = 'http://192.168.1.20:50000?view=config';
 const DEFAULT_MESSEKOPFER_IP = '192.168.1.7';
 
 // =================== TIME SYNC VIEW ===================
 const TimeSyncView = () => {
   const [pcTime, setPcTime] = useState(new Date());
-  const [deviceIp, setDeviceIp] = useState(DEFAULT_MESSEKOPFER_IP);
   const [loading, setLoading] = useState(false);
   const [loadingDeviceTime, setLoadingDeviceTime] = useState(false);
   const [message, setMessage] = useState({ text: '', severity: 'success' });
@@ -73,7 +72,6 @@ const TimeSyncView = () => {
     return () => clearInterval(timer);
   }, []);
 
-  // Récupération de l'heure (option : showSpinner = true pour les actions manuelles)
   const fetchDeviceTime = async (showSpinner = false) => {
     if (showSpinner) setLoadingDeviceTime(true);
     try {
@@ -94,9 +92,8 @@ const TimeSyncView = () => {
     }
   };
 
-  // Premier chargement avec spinner, puis mise à jour silencieuse chaque seconde
   useEffect(() => {
-    fetchDeviceTime(true); // chargement initial avec spinner
+    fetchDeviceTime(true);
     const interval = setInterval(() => fetchDeviceTime(false), 1000);
     return () => clearInterval(interval);
   }, []);
@@ -109,12 +106,6 @@ const TimeSyncView = () => {
     });
   };
 
-  const handleCopyToClipboard = () => {
-    navigator.clipboard.writeText(formatDateTime(pcTime));
-    setMessage({ text: '✅ Zeit kopiert!', severity: 'success' });
-    setTimeout(() => setMessage({ text: '', severity: 'success' }), 3000);
-  };
-
   const handleSync = async () => {
     setLoading(true);
     setMessage({ text: '', severity: 'success' });
@@ -122,7 +113,7 @@ const TimeSyncView = () => {
       const response = await fetch(`${BACKEND_URL}/sync-time`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ datetime: pcTime.toISOString(), deviceIp })
+        body: JSON.stringify({ datetime: pcTime.toISOString(), deviceIp: DEFAULT_MESSEKOPFER_IP })
       });
       if (response.ok) {
         setMessage({ text: '✅ Synchronisation erfolgreich!', severity: 'success' });
@@ -154,7 +145,7 @@ const TimeSyncView = () => {
             <Typography variant="h4" sx={{ fontFamily: 'monospace', bgcolor: '#f8f9fa', py: 2, borderRadius: 2, mb: 2 }}>
               {formatDateTime(pcTime)}
             </Typography>
-            <Button variant="outlined" startIcon={<ContentCopyIcon />} onClick={handleCopyToClipboard}>Kopieren</Button>
+            {/* Bouton Kopieren supprimé */}
           </Card>
         </Grid>
         <Grid item xs={12} sx={{ display: 'flex' }}>
@@ -177,7 +168,7 @@ const TimeSyncView = () => {
 
       <Card sx={{ mt: 5, p: 4, bgcolor: '#e8f5e9' }}>
         <Typography variant="h6" fontWeight={600}>Netzwerkkonfiguration (Messekoffer)</Typography>
-        <TextField fullWidth label="IP-Adresse des Messekoffers" value={deviceIp} onChange={(e) => setDeviceIp(e.target.value)} margin="normal" helperText="z. B. 192.168.1.7" />
+        {/* Champ IP supprimé */}
         <Button variant="contained" fullWidth onClick={handleSync} disabled={loading} sx={{ mt: 2, bgcolor: '#2c7a4d' }}>
           {loading ? 'Synchronisiere...' : 'PC-Zeit auf Messekoffer übertragen'}
         </Button>
@@ -249,7 +240,7 @@ function App() {
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 5 }}>
         <Typography variant="h4" fontWeight={700}>Einstellungen & System</Typography>
-        <Typography variant="body1" sx={{ color: '#5a6e7c' }}>Konfigurieren Sie Ihre Messkanäle oder synchronisieren Sie die Systemzeit.</Typography>
+        <Typography variant="body1" sx={{ color: '#5a6e7c' }}>Konfigurieren Sie Ihre Mess192.168.1.20 oder synchronisieren Sie die Systemzeit.</Typography>
       </Box>
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap', mb: 5 }}>
         <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = CONFIG_URL}>
@@ -265,7 +256,7 @@ function App() {
             <AccessTimeIcon sx={{ fontSize: 72, color: theme.palette.secondary.main }} />
             <Typography variant="h5" fontWeight={700}>Zeitsynchronisation</Typography>
             <Typography variant="body2" color="text.secondary">Uhrzeit zwischen Messekoffer und PC abgleichen</Typography>
-            <Typography variant="caption">NTP • manuell • Automatik</Typography>
+            {/* Ligne "NTP • manuell • Automatik" supprimée */}
           </CardActionArea>
         </Card>
       </Box>
@@ -276,9 +267,8 @@ function App() {
               <Typography variant="h6" fontWeight={600}>ℹ️ Systeminformationen</Typography>
               <Box component="ul" sx={{ pl: 2, color: '#4a627a' }}>
                 <li>mE2go Portal Version 2.1.0</li>
-                <li>REST-API Endpunkt: <code>{BACKEND_URL}</code></li>
                 <li>Grafana Dashboard: Live‑Daten & Historien</li>
-                <li>MQTT Broker: aktiv (Port 1883)</li>
+                {/* Lignes REST-API et MQTT supprimées */}
               </Box>
             </Grid>
             <Grid item xs={12} md={6}>
