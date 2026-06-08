@@ -17,6 +17,7 @@ import CloudSyncIcon from '@mui/icons-material/CloudSync';
 import SecurityIcon from '@mui/icons-material/Security';
 import BuildIcon from '@mui/icons-material/Build';
 import RefreshIcon from '@mui/icons-material/Refresh';
+import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
 
 const theme = createTheme({
   palette: {
@@ -56,6 +57,7 @@ const BACKEND_URL = 'http://192.168.1.20:4001';
 const APP_URL = 'http://192.168.1.20:50000/';
 const GRAFANA_URL = 'http://192.168.1.20:3000/d/adlddrl/monitoring-des-stromverbrauchs-e28093-me180e2809c?orgId=1&from=now-15m&to=now&timezone=browser&var-kanal=CH16&refresh=5s';
 const CONFIG_URL = 'http://192.168.1.20:50000?view=config';
+const ENERGY_URL = 'http://192.168.1.20:50000?view=energy';
 const DEFAULT_MESSEKOPFER_IP = '192.168.1.7';
 
 // =================== TIME SYNC VIEW ===================
@@ -145,7 +147,6 @@ const TimeSyncView = () => {
             <Typography variant="h4" sx={{ fontFamily: 'monospace', bgcolor: '#f8f9fa', py: 2, borderRadius: 2, mb: 2 }}>
               {formatDateTime(pcTime)}
             </Typography>
-            {/* Bouton Kopieren supprimé */}
           </Card>
         </Grid>
         <Grid item xs={12} sx={{ display: 'flex' }}>
@@ -168,7 +169,6 @@ const TimeSyncView = () => {
 
       <Card sx={{ mt: 5, p: 4, bgcolor: '#e8f5e9' }}>
         <Typography variant="h6" fontWeight={600}>Netzwerkkonfiguration (Messekoffer)</Typography>
-        {/* Champ IP supprimé */}
         <Button variant="contained" fullWidth onClick={handleSync} disabled={loading} sx={{ mt: 2, bgcolor: '#2c7a4d' }}>
           {loading ? 'Synchronisiere...' : 'PC-Zeit auf Messekoffer übertragen'}
         </Button>
@@ -189,8 +189,8 @@ function App() {
   };
 
   const cards = [
-    { title: 'Daten verwalten', desc: 'Live‑Stromdaten analysieren', icon: <AnalyticsIcon sx={{ fontSize: 64, color: theme.palette.primary.main }} />, url: APP_URL, action: null },
-    { title: 'Live Daten', desc: 'Grafana Dashboard', icon: <DashboardCustomizeIcon sx={{ fontSize: 64, color: theme.palette.secondary.main }} />, url: GRAFANA_URL, action: null },
+    { title: 'Live Daten', desc: 'Live‑Stromdaten analysieren', icon: <AnalyticsIcon sx={{ fontSize: 64, color: theme.palette.primary.main }} />, url: APP_URL, action: null },
+    { title: 'Dashboard', desc: 'Grafana Dashboard', icon: <DashboardCustomizeIcon sx={{ fontSize: 64, color: theme.palette.secondary.main }} />, url: GRAFANA_URL, action: null },
     { title: 'Einstellungen', desc: 'Konfiguration & Synchronisation', icon: <TuneIcon sx={{ fontSize: 64, color: theme.palette.success.main }} />, url: null, action: () => setShowEinstellungen(true) }
   ];
 
@@ -256,7 +256,15 @@ function App() {
             <AccessTimeIcon sx={{ fontSize: 72, color: theme.palette.secondary.main }} />
             <Typography variant="h5" fontWeight={700}>Zeitsynchronisation</Typography>
             <Typography variant="body2" color="text.secondary">Uhrzeit zwischen Messekoffer und PC abgleichen</Typography>
-            {/* Ligne "NTP • manuell • Automatik" supprimée */}
+          </CardActionArea>
+        </Card>
+        {/* NOUVELLE CARTE KANAL ZÄHLER */}
+        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = ENERGY_URL}>
+          <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
+            <BatteryChargingFullIcon sx={{ fontSize: 72, color: theme.palette.success.main }} />
+            <Typography variant="h5" fontWeight={700}>Kanal Zähler</Typography>
+            <Typography variant="body2" color="text.secondary">Energie kumuliert & temporär verwalten</Typography>
+            <Typography variant="caption">18 Kanäle • Energiewerte • Änderungshistorie</Typography>
           </CardActionArea>
         </Card>
       </Box>
@@ -268,7 +276,6 @@ function App() {
               <Box component="ul" sx={{ pl: 2, color: '#4a627a' }}>
                 <li>mE2go Portal Version 2.1.0</li>
                 <li>Grafana Dashboard: Live‑Daten & Historien</li>
-                {/* Lignes REST-API et MQTT supprimées */}
               </Box>
             </Grid>
             <Grid item xs={12} md={6}>
@@ -276,6 +283,7 @@ function App() {
               <Box component="ul" sx={{ pl: 2, color: '#4a627a' }}>
                 <li><strong>Kanäle konfigurieren:</strong> Legen Sie Messbereiche, Skalierung und Einheiten fest.</li>
                 <li><strong>Zeitsynchronisation:</strong> Stellen Sie sicher, dass PC und Messekoffer exakt dieselbe Uhrzeit haben.</li>
+                <li><strong>Kanal Zähler:</strong> Verwalten Sie die kumulierten und temporären Energiewerte pro Kanal.</li>
                 <li><strong>Support:</strong> Bei Problemen wenden Sie sich an Ihren Administrator.</li>
               </Box>
             </Grid>
