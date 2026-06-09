@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
   Box, Container, Typography, Card, CardActionArea,
-  Grid, AppBar, Toolbar, Button, TextField, Alert, CircularProgress, IconButton
+  Grid, AppBar, Toolbar, Button, Alert, CircularProgress, IconButton, Tooltip
 } from '@mui/material';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize';
@@ -10,7 +10,6 @@ import TuneIcon from '@mui/icons-material/Tune';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import SettingsIcon from '@mui/icons-material/Settings';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import SpeedIcon from '@mui/icons-material/Speed';
 import PrecisionManufacturingIcon from '@mui/icons-material/PrecisionManufacturing';
 import CloudSyncIcon from '@mui/icons-material/CloudSync';
@@ -18,6 +17,8 @@ import SecurityIcon from '@mui/icons-material/Security';
 import BuildIcon from '@mui/icons-material/Build';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
+import WifiIcon from '@mui/icons-material/Wifi';
+import WifiOffIcon from '@mui/icons-material/WifiOff';
 
 const theme = createTheme({
   palette: {
@@ -60,6 +61,83 @@ const CONFIG_URL = 'http://192.168.1.20:50000?view=config';
 const ENERGY_URL = 'http://192.168.1.20:50000?view=energy';
 const DEFAULT_MESSEKOPFER_IP = '192.168.1.7';
 
+// =================== HOOK POUR LE STATUT MESSEKOFFER ===================
+const useMessekofferStatus = () => {
+  const [isOnline, setIsOnline] = useState(null);
+  const [checking, setChecking] = useState(true);
+
+  const checkStatus = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/ping-messekoffer`);
+      const data = await response.json();
+      setIsOnline(data.status === 'online');
+    } catch (error) {
+      setIsOnline(false);
+    } finally {
+      setChecking(false);
+    }
+  };
+
+  useEffect(() => {
+    checkStatus();
+    const interval = setInterval(checkStatus, 5000);
+    return () => clearInterval(interval);
+  }, []);
+
+  return { isOnline, checking };
+};
+
+// =================== COMPOSANT STATUT MESSEKOFFER (NAVBAR) ===================
+const MessekofferStatusNavbar = () => {
+  const { isOnline, checking } = useMessekofferStatus();
+
+  if (checking) {
+    return (
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#f5f5f5', px: 1.5, py: 0.5, borderRadius: 2 }}>
+        <CircularProgress size={14} />
+        <Typography variant="caption" color="text.secondary">Connexion...</Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Tooltip title={isOnline ? "Messekoffer erreichbar" : "Messekoffer nicht erreichbar - Netzwerk prüfen"}>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 0.8, 
+        bgcolor: isOnline ? '#e8f5e9' : '#ffebee',
+        px: 1.5, 
+        py: 0.5, 
+        borderRadius: 3,
+        border: `1px solid ${isOnline ? '#81c784' : '#ef9a9a'}`,
+        transition: 'all 0.3s ease'
+      }}>
+        {isOnline ? (
+          <WifiIcon sx={{ color: '#4caf50', fontSize: 18 }} />
+        ) : (
+          <WifiOffIcon sx={{ color: '#ef5350', fontSize: 18 }} />
+        )}
+        <Typography variant="caption" sx={{ fontWeight: 500, color: isOnline ? '#2e7d32' : '#c62828' }}>
+          mE180 {isOnline ? 'Online' : 'Offline'}
+        </Typography>
+        <Box sx={{ 
+          width: 8, 
+          height: 8, 
+          borderRadius: '50%', 
+          bgcolor: isOnline ? '#4caf50' : '#ef5350',
+          animation: isOnline ? 'pulse 1.5s infinite' : 'none',
+          '@keyframes pulse': {
+            '0%': { opacity: 1, transform: 'scale(1)' },
+            '50%': { opacity: 0.6, transform: 'scale(1.2)' },
+            '100%': { opacity: 1, transform: 'scale(1)' }
+          }
+        }} />
+      </Box>
+    </Tooltip>
+  );
+};
+
 // =================== TIME SYNC VIEW ===================
 const TimeSyncView = () => {
   const [pcTime, setPcTime] = useState(new Date());
@@ -68,6 +146,7 @@ const TimeSyncView = () => {
   const [message, setMessage] = useState({ text: '', severity: 'success' });
   const [deviceTime, setDeviceTime] = useState(null);
   const [deviceTimeError, setDeviceTimeError] = useState('');
+  const { isOnline: isMessekofferOnline } = useMessekofferStatus();
 
   useEffect(() => {
     const timer = setInterval(() => setPcTime(new Date()), 1000);
@@ -80,7 +159,20 @@ const TimeSyncView = () => {
       const response = await fetch(`${BACKEND_URL}/time`);
       if (response.ok) {
         const data = await response.json();
-        setDeviceTime(new Date(data.datetime));
+        if (data.messekoffer_datetime) {
+          const parts = data.messekoffer_datetime.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+          if (parts) {
+            const year = 2000 + parseInt(parts[3]);
+            const month = parseInt(parts[2]) - 1;
+            const day = parseInt(parts[1]);
+            const hour = parseInt(parts[4]);
+            const minute = parseInt(parts[5]);
+            const second = parseInt(parts[6]);
+            setDeviceTime(new Date(year, month, day, hour, minute, second));
+          }
+        } else {
+          setDeviceTime(new Date(data.datetime));
+        }
         setDeviceTimeError('');
       } else {
         throw new Error(`HTTP ${response.status}`);
@@ -96,7 +188,7 @@ const TimeSyncView = () => {
 
   useEffect(() => {
     fetchDeviceTime(true);
-    const interval = setInterval(() => fetchDeviceTime(false), 1000);
+    const interval = setInterval(() => fetchDeviceTime(false), 3000);
     return () => clearInterval(interval);
   }, []);
 
@@ -119,7 +211,7 @@ const TimeSyncView = () => {
       });
       if (response.ok) {
         setMessage({ text: '✅ Synchronisation erfolgreich!', severity: 'success' });
-        await fetchDeviceTime(true);
+        setTimeout(() => fetchDeviceTime(true), 1000);
       } else {
         throw new Error(`HTTP ${response.status}`);
       }
@@ -162,17 +254,125 @@ const TimeSyncView = () => {
                 {formatDateTime(deviceTime)}
               </Typography>
             )}
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => fetchDeviceTime(true)} disabled={loadingDeviceTime}>Aktualisieren</Button>
+            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => fetchDeviceTime(true)} disabled={loadingDeviceTime} sx={{ borderRadius: 3 }}>
+              Aktualisieren
+            </Button>
           </Card>
         </Grid>
       </Grid>
 
-      <Card sx={{ mt: 5, p: 4, bgcolor: '#e8f5e9' }}>
-        <Typography variant="h6" fontWeight={600}>Netzwerkkonfiguration (Messekoffer)</Typography>
-        <Button variant="contained" fullWidth onClick={handleSync} disabled={loading} sx={{ mt: 2, bgcolor: '#2c7a4d' }}>
-          {loading ? 'Synchronisiere...' : 'PC-Zeit auf Messekoffer übertragen'}
-        </Button>
-        {message.text && <Alert severity={message.severity} sx={{ mt: 3 }}>{message.text}</Alert>}
+      <Card sx={{ mt: 5, p: 4, bgcolor: '#ffffff', borderRadius: 4, boxShadow: 3 }}>
+        {/* ==================== TITRE AVEC STATUT (ligne fine) ==================== */}
+        <Box sx={{ mb: 3 }}>
+          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, flexWrap: 'wrap' }}>
+            <Typography variant="h6" fontWeight={600} sx={{ color: '#1e2a3a' }}>
+              Netzwerkkonfiguration (Messekoffer)
+            </Typography>
+            {isMessekofferOnline !== null && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
+                <Box sx={{ 
+                  width: 8, 
+                  height: 8, 
+                  borderRadius: '50%', 
+                  bgcolor: isMessekofferOnline ? '#4caf50' : '#ef5350',
+                  animation: isMessekofferOnline ? 'pulse 1.5s infinite' : 'none',
+                  '@keyframes pulse': {
+                    '0%': { opacity: 1, transform: 'scale(1)' },
+                    '50%': { opacity: 0.5, transform: 'scale(1.3)' },
+                    '100%': { opacity: 1, transform: 'scale(1)' }
+                  }
+                }} />
+                <Typography variant="caption" sx={{ 
+                  fontWeight: 500, 
+                  color: isMessekofferOnline ? '#4caf50' : '#ef5350'
+                }}>
+                  {isMessekofferOnline ? 'mE180 Online' : 'mE180 Offline'}
+                </Typography>
+              </Box>
+            )}
+          </Box>
+          {/* Ligne fine sous le titre */}
+          <Box sx={{ 
+            mt: 1.5, 
+            borderBottom: `2px solid ${isMessekofferOnline === true ? '#4caf50' : isMessekofferOnline === false ? '#ef5350' : '#ddd'}`,
+            width: '60px',
+            transition: 'all 0.3s ease'
+          }} />
+        </Box>
+        {/* ==================== FIN TITRE ==================== */}
+        
+        {/* ==================== BOUTON SYNCHRONISATION ==================== */}
+        {isMessekofferOnline === true ? (
+          <Button 
+            variant="contained" 
+            fullWidth 
+            onClick={handleSync} 
+            disabled={loading}
+            startIcon={!loading && <RefreshIcon />}
+            sx={{ 
+              bgcolor: '#2c7a4d',
+              borderRadius: 5,
+              fontSize: '1rem',
+              py: 1.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              transition: 'all 0.3s ease',
+              '&:hover': {
+                bgcolor: '#1b5e2a',
+                transform: 'scale(1.01)'
+              }
+            }}
+          >
+            {loading ? (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CircularProgress size={22} sx={{ color: 'white' }} />
+                <span>Synchronisiere...</span>
+              </Box>
+            ) : (
+              '📡 PC-Zeit auf Messekoffer übertragen'
+            )}
+          </Button>
+        ) : isMessekofferOnline === false ? (
+          <Button 
+            variant="contained" 
+            fullWidth 
+            disabled
+            sx={{ 
+              bgcolor: '#9e9e9e',
+              borderRadius: 5,
+              fontSize: '1rem',
+              py: 1.5,
+              textTransform: 'none',
+              fontWeight: 600,
+              cursor: 'not-allowed'
+            }}
+          >
+            🔒 Synchronisation nicht möglich — Messekoffer offline
+          </Button>
+        ) : (
+          <Button 
+            variant="contained" 
+            fullWidth 
+            disabled
+            sx={{ 
+              bgcolor: '#9e9e9e',
+              borderRadius: 5,
+              fontSize: '1rem',
+              py: 1.5,
+              textTransform: 'none',
+              fontWeight: 600
+            }}
+          >
+            ⏳ Verbindung wird geprüft...
+          </Button>
+        )}
+        {/* ==================== FIN BOUTON ==================== */}
+        
+        {message.text && (
+          <Alert severity={message.severity} sx={{ mt: 3, borderRadius: 3 }}>
+            {message.text}
+          </Alert>
+        )}
       </Card>
     </Container>
   );
@@ -258,7 +458,6 @@ function App() {
             <Typography variant="body2" color="text.secondary">Uhrzeit zwischen Messekoffer und PC abgleichen</Typography>
           </CardActionArea>
         </Card>
-        {/* NOUVELLE CARTE KANAL ZÄHLER */}
         <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = ENERGY_URL}>
           <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
             <BatteryChargingFullIcon sx={{ fontSize: 72, color: theme.palette.success.main }} />
@@ -269,7 +468,7 @@ function App() {
         </Card>
       </Box>
       <Box sx={{ maxWidth: '800px', mx: 'auto' }}>
-        <Card sx={{ p: 4, bgcolor: '#ffffff' }}>
+        <Card sx={{ p: 4, bgcolor: '#ffffff', borderRadius: 4 }}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
               <Typography variant="h6" fontWeight={600}>ℹ️ Systeminformationen</Typography>
@@ -302,8 +501,10 @@ function App() {
               {(showEinstellungen || showTimeSync) && <IconButton onClick={handleBackToMain}><ArrowBackIcon /></IconButton>}
               <Box component="img" src="/logo.png" alt="Logo" sx={{ height: 40, objectFit: 'contain' }} />
             </Box>
-            <Box display="flex" alignItems="center" gap={1}>
+            <Box display="flex" alignItems="center" gap={2}>
               <Typography variant="h6" fontWeight={700}>mE2go | Industrial Control</Typography>
+              {/* STATUT MESSEKOFFER DANS LA NAVBAR */}
+              <MessekofferStatusNavbar />
             </Box>
           </Toolbar>
         </AppBar>
