@@ -50,7 +50,7 @@ app.get('/ping', (req, res) => {
   res.json({ status: 'ok', message: 'Backend is running' });
 });
 
-// Lire l'heure
+// ==================== LIRE L'HEURE (MODIFIÉ : FORMAT JJ-MM-AAAA) ====================
 app.get('/time', async (req, res) => {
   console.log('📡 Lecture heure du Messekoffer...');
   try {
@@ -61,11 +61,27 @@ app.get('/time', async (req, res) => {
     if (response.data && typeof response.data === 'string') {
       const match = response.data.match(/curtime=([^\n]+)/);
       if (match) {
-        messekofferTime = match[1];
+        let rawTime = match[1];
+        // Conversion du format MM/DD/YY HH:MM:SS vers DD-MM-YYYY HH:MM:SS
+        const parts = rawTime.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
+        if (parts) {
+          // parts[1] = mois, parts[2] = jour, parts[3] = année (2 chiffres)
+          // parts[4] = heure, parts[5] = minute, parts[6] = seconde
+          const day = parts[2];
+          const month = parts[1];
+          const year = '20' + parts[3];
+          const hour = parts[4];
+          const minute = parts[5];
+          const second = parts[6];
+          messekofferTime = `${day}-${month}-${year} ${hour}:${minute}:${second}`;
+          console.log('✅ Heure convertie (DD-MM-YYYY):', messekofferTime);
+        } else {
+          messekofferTime = rawTime;
+          console.log('⚠️ Heure brute (non convertie):', messekofferTime);
+        }
       }
     }
     
-    console.log('✅ Heure récupérée:', messekofferTime);
     res.json({ 
       datetime: new Date().toISOString(),
       messekoffer_datetime: messekofferTime
@@ -76,7 +92,7 @@ app.get('/time', async (req, res) => {
   }
 });
 
-// Synchroniser l'heure
+// ==================== SYNCHRONISER L'HEURE ====================
 app.post('/sync-time', async (req, res) => {
   console.log('🔄 Synchronisation demandée...');
   const { datetime } = req.body;
@@ -96,11 +112,12 @@ app.post('/sync-time', async (req, res) => {
     const TimezoneOffset = -pcDate.getTimezoneOffset();
     const shortYear = String(Year).slice(-2);
     
+    // Attention : Le Messekoffer attend le format MM/DD/YY pour l'envoi !
     const curtimeValue = `${Month}/${Day}/${shortYear} ${Hour}:${Minute}:${Second} ${TimezoneOffset}`;
     
     const setTimeUrl = `http://${MESSEKOPFER_IP}/set_sys_config.cgi?id=${MESSEKOPFER_ID}&sys=time&curtime=${encodeURIComponent(curtimeValue)}`;
     
-    console.log('📤 Envoi:', curtimeValue);
+    console.log('📤 Envoi (format MM/DD/YY):', curtimeValue);
     const response = await axios.get(setTimeUrl, { timeout: 10000 });
     
     console.log('✅ Réponse:', response.data);

@@ -160,18 +160,10 @@ const TimeSyncView = () => {
       if (response.ok) {
         const data = await response.json();
         if (data.messekoffer_datetime) {
-          const parts = data.messekoffer_datetime.match(/(\d{2})\/(\d{2})\/(\d{2})\s+(\d{2}):(\d{2}):(\d{2})/);
-          if (parts) {
-            const year = 2000 + parseInt(parts[3]);
-            const month = parseInt(parts[2]) - 1;
-            const day = parseInt(parts[1]);
-            const hour = parseInt(parts[4]);
-            const minute = parseInt(parts[5]);
-            const second = parseInt(parts[6]);
-            setDeviceTime(new Date(year, month, day, hour, minute, second));
-          }
+          // Le backend envoie maintenant directement la date au format DD-MM-YYYY HH:MM:SS
+          setDeviceTime(data.messekoffer_datetime);
         } else {
-          setDeviceTime(new Date(data.datetime));
+          setDeviceTime('--:--:--');
         }
         setDeviceTimeError('');
       } else {
@@ -251,7 +243,7 @@ const TimeSyncView = () => {
               <Alert severity="error">{deviceTimeError}</Alert>
             ) : (
               <Typography variant="h4" sx={{ fontFamily: 'monospace', bgcolor: '#f8f9fa', py: 2, borderRadius: 2, mb: 2, color: '#e67e22' }}>
-                {formatDateTime(deviceTime)}
+                {deviceTime || '--:--:--'}
               </Typography>
             )}
             <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => fetchDeviceTime(true)} disabled={loadingDeviceTime} sx={{ borderRadius: 3 }}>
@@ -262,7 +254,6 @@ const TimeSyncView = () => {
       </Grid>
 
       <Card sx={{ mt: 5, p: 4, bgcolor: '#ffffff', borderRadius: 4, boxShadow: 3 }}>
-        {/* ==================== TITRE AVEC STATUT (ligne fine) ==================== */}
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, flexWrap: 'wrap' }}>
             <Typography variant="h6" fontWeight={600} sx={{ color: '#1e2a3a' }}>
@@ -291,7 +282,6 @@ const TimeSyncView = () => {
               </Box>
             )}
           </Box>
-          {/* Ligne fine sous le titre */}
           <Box sx={{ 
             mt: 1.5, 
             borderBottom: `2px solid ${isMessekofferOnline === true ? '#4caf50' : isMessekofferOnline === false ? '#ef5350' : '#ddd'}`,
@@ -299,9 +289,7 @@ const TimeSyncView = () => {
             transition: 'all 0.3s ease'
           }} />
         </Box>
-        {/* ==================== FIN TITRE ==================== */}
         
-        {/* ==================== BOUTON SYNCHRONISATION ==================== */}
         {isMessekofferOnline === true ? (
           <Button 
             variant="contained" 
@@ -366,7 +354,6 @@ const TimeSyncView = () => {
             ⏳ Verbindung wird geprüft...
           </Button>
         )}
-        {/* ==================== FIN BOUTON ==================== */}
         
         {message.text && (
           <Alert severity={message.severity} sx={{ mt: 3, borderRadius: 3 }}>
@@ -503,7 +490,6 @@ function App() {
             </Box>
             <Box display="flex" alignItems="center" gap={2}>
               <Typography variant="h6" fontWeight={700}>mE2go | Industrial Control</Typography>
-              {/* STATUT MESSEKOFFER DANS LA NAVBAR */}
               <MessekofferStatusNavbar />
             </Box>
           </Toolbar>
