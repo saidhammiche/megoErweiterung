@@ -19,6 +19,7 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
 import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
+import DeviceHubIcon from '@mui/icons-material/DeviceHub';
 
 const theme = createTheme({
   palette: {
@@ -55,10 +56,13 @@ const theme = createTheme({
 
 // =================== LIENS ===================
 const BACKEND_URL = 'http://192.168.1.20:4001';
-const APP_URL = 'http://192.168.1.20:50000/';
+const APP_URL = 'http://192.168.1.20:5000/';
 const GRAFANA_URL = 'http://192.168.1.20:3000/d/adlddrl/monitoring-des-stromverbrauchs-e28093-me180e2809c?orgId=1&from=now-15m&to=now&timezone=browser&var-kanal=CH16&refresh=5s';
-const CONFIG_URL = 'http://192.168.1.20:50000?view=config';
-const ENERGY_URL = 'http://192.168.1.20:50000?view=energy';
+const CONFIG_URL = 'http://192.168.1.20:5000?view=config';
+const ENERGY_URL = 'http://192.168.1.20:5000?view=energy';
+// ✅ Nouveau lien : ouvre l'onglet Mapping (retiré de la navbar de l'app principale,
+// accessible désormais uniquement depuis ce portail, onglet Einstellungen)
+const MAPPING_URL = 'http://192.168.1.20:5000?view=mapping';
 const DEFAULT_MESSEKOPFER_IP = '192.168.1.7';
 
 // =================== HOOK POUR LE STATUT MESSEKOFFER ===================
@@ -451,6 +455,15 @@ function App() {
             <Typography variant="h5" fontWeight={700}>Kanal Zähler</Typography>
             <Typography variant="body2" color="text.secondary">Energie kumuliert & temporär verwalten</Typography>
             <Typography variant="caption">18 Kanäle • Energiewerte • Änderungshistorie</Typography>
+          </CardActionArea>
+        </Card>
+        {/* ✅ Nouvelle carte "Mapping" — mêmes dimensions exactes que les 3 cartes ci-dessus */}
+        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = MAPPING_URL}>
+          <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
+            <DeviceHubIcon sx={{ fontSize: 72, color: theme.palette.primary.main }} />
+            <Typography variant="h5" fontWeight={700}>Mapping</Typography>
+            <Typography variant="body2" color="text.secondary">Sensor-Zuordnung verwalten</Typography>
+            <Typography variant="caption">Sensor-Übersicht • Historie • Kanalzuordnung</Typography>
           </CardActionArea>
         </Card>
       </Box>
