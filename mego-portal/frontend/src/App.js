@@ -60,8 +60,9 @@ const APP_URL = 'http://192.168.1.20:5000/';
 const GRAFANA_URL = 'http://192.168.1.20:3000/d/adlddrl/monitoring-des-stromverbrauchs-e28093-me180e2809c?orgId=1&from=now-15m&to=now&timezone=browser&var-kanal=CH16&refresh=5s';
 const CONFIG_URL = 'http://192.168.1.20:5000?view=config';
 const ENERGY_URL = 'http://192.168.1.20:5000?view=energy';
-// ✅ Nouveau lien : ouvre l'onglet Mapping (retiré de la navbar de l'app principale,
-// accessible désormais uniquement depuis ce portail, onglet Einstellungen)
+// ✅ Vue Sensor-Bezeichnung développée dans l'app mego elle-même (App_20sensors.jsx)
+const SENSOR_CONFIG_URL = 'http://192.168.1.20:5000?view=sensorconfig';
+// ✅ Lien Mapping : accessible désormais depuis la carte "Kundendaten" sur la page principale
 const MAPPING_URL = 'http://192.168.1.20:5000?view=mapping';
 const DEFAULT_MESSEKOPFER_IP = '192.168.1.7';
 
@@ -373,14 +374,18 @@ const TimeSyncView = () => {
 function App() {
   const [showEinstellungen, setShowEinstellungen] = useState(false);
   const [showTimeSync, setShowTimeSync] = useState(false);
+  const [showLiveDaten, setShowLiveDaten] = useState(false);
+  const [showKanalKonfiguration, setShowKanalKonfiguration] = useState(false);
 
   const handleBackToMain = () => {
     setShowEinstellungen(false);
     setShowTimeSync(false);
+    setShowLiveDaten(false);
+    setShowKanalKonfiguration(false);
   };
 
   const cards = [
-    { title: 'Live Daten', desc: 'Live‑Stromdaten analysieren', icon: <AnalyticsIcon sx={{ fontSize: 64, color: theme.palette.primary.main }} />, url: APP_URL, action: null },
+    { title: 'Live Daten', desc: 'Live‑Stromdaten analysieren', icon: <AnalyticsIcon sx={{ fontSize: 64, color: theme.palette.primary.main }} />, url: null, action: () => setShowLiveDaten(true) },
     { title: 'Dashboard', desc: 'Grafana Dashboard', icon: <DashboardCustomizeIcon sx={{ fontSize: 64, color: theme.palette.secondary.main }} />, url: GRAFANA_URL, action: null },
     { title: 'Einstellungen', desc: 'Konfiguration & Synchronisation', icon: <TuneIcon sx={{ fontSize: 64, color: theme.palette.success.main }} />, url: null, action: () => setShowEinstellungen(true) }
   ];
@@ -427,6 +432,56 @@ function App() {
     </Box>
   );
 
+  const liveDatenView = (
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ textAlign: 'center', mb: 5 }}>
+        <Typography variant="h4" fontWeight={700}>Live Daten</Typography>
+        <Typography variant="body1" sx={{ color: '#5a6e7c' }}>Wählen Sie den gewünschten Bereich.</Typography>
+      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
+        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = APP_URL}>
+          <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
+            <AnalyticsIcon sx={{ fontSize: 72, color: theme.palette.primary.main }} />
+            <Typography variant="h5" fontWeight={700}>Daten verwalten</Typography>
+            <Typography variant="body2" color="text.secondary">Live‑Stromdaten analysieren</Typography>
+          </CardActionArea>
+        </Card>
+        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = MAPPING_URL}>
+          <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
+            <DeviceHubIcon sx={{ fontSize: 72, color: theme.palette.primary.main }} />
+            <Typography variant="h5" fontWeight={700}>Kundendaten</Typography>
+            <Typography variant="body2" color="text.secondary">Sensor-Zuordnung verwalten</Typography>
+          </CardActionArea>
+        </Card>
+      </Box>
+    </Container>
+  );
+
+  const kanalKonfigurationView = (
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Box sx={{ textAlign: 'center', mb: 5 }}>
+        <Typography variant="h4" fontWeight={700}>Kanäle konfigurieren</Typography>
+        <Typography variant="body1" sx={{ color: '#5a6e7c' }}>Wählen Sie den gewünschten Bereich.</Typography>
+      </Box>
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
+        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = CONFIG_URL}>
+          <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
+            <SettingsIcon sx={{ fontSize: 72, color: theme.palette.primary.main }} />
+            <Typography variant="h5" fontWeight={700}>Kanal Konfiguration</Typography>
+            <Typography variant="body2" color="text.secondary">Parameter der Messkanäle anpassen</Typography>
+          </CardActionArea>
+        </Card>
+        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = SENSOR_CONFIG_URL}>
+          <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
+            <DeviceHubIcon sx={{ fontSize: 72, color: theme.palette.primary.main }} />
+            <Typography variant="h5" fontWeight={700}>Sensor</Typography>
+            <Typography variant="body2" color="text.secondary">Sensor-Bezeichnung verwalten</Typography>
+          </CardActionArea>
+        </Card>
+      </Box>
+    </Container>
+  );
+
   const einstellungenView = (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 5 }}>
@@ -434,7 +489,7 @@ function App() {
         <Typography variant="body1" sx={{ color: '#5a6e7c' }}>Konfigurieren Sie Ihre Mess192.168.1.20 oder synchronisieren Sie die Systemzeit.</Typography>
       </Box>
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap', mb: 5 }}>
-        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = CONFIG_URL}>
+        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => setShowKanalKonfiguration(true)}>
           <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
             <SettingsIcon sx={{ fontSize: 72, color: theme.palette.primary.main }} />
             <Typography variant="h5" fontWeight={700}>Kanäle konfigurieren</Typography>
@@ -455,15 +510,6 @@ function App() {
             <Typography variant="h5" fontWeight={700}>Kanal Zähler</Typography>
             <Typography variant="body2" color="text.secondary">Energie kumuliert & temporär verwalten</Typography>
             <Typography variant="caption">18 Kanäle • Energiewerte • Änderungshistorie</Typography>
-          </CardActionArea>
-        </Card>
-        {/* ✅ Nouvelle carte "Mapping" — mêmes dimensions exactes que les 3 cartes ci-dessus */}
-        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = MAPPING_URL}>
-          <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
-            <DeviceHubIcon sx={{ fontSize: 72, color: theme.palette.primary.main }} />
-            <Typography variant="h5" fontWeight={700}>Mapping</Typography>
-            <Typography variant="body2" color="text.secondary">Sensor-Zuordnung verwalten</Typography>
-            <Typography variant="caption">Sensor-Übersicht • Historie • Kanalzuordnung</Typography>
           </CardActionArea>
         </Card>
       </Box>
@@ -498,7 +544,7 @@ function App() {
         <AppBar position="sticky" elevation={0} sx={{ bgcolor: 'white', borderBottom: '1px solid #ddd' }}>
           <Toolbar sx={{ justifyContent: 'space-between' }}>
             <Box display="flex" alignItems="center" gap={1}>
-              {(showEinstellungen || showTimeSync) && <IconButton onClick={handleBackToMain}><ArrowBackIcon /></IconButton>}
+              {(showEinstellungen || showTimeSync || showLiveDaten || showKanalKonfiguration) && <IconButton onClick={handleBackToMain}><ArrowBackIcon /></IconButton>}
               <Box component="img" src="/logo.png" alt="Logo" sx={{ height: 40, objectFit: 'contain' }} />
             </Box>
             <Box display="flex" alignItems="center" gap={2}>
@@ -507,7 +553,7 @@ function App() {
             </Box>
           </Toolbar>
         </AppBar>
-        {showTimeSync ? <TimeSyncView /> : showEinstellungen ? einstellungenView : mainView}
+        {showTimeSync ? <TimeSyncView /> : showKanalKonfiguration ? kanalKonfigurationView : showLiveDaten ? liveDatenView : showEinstellungen ? einstellungenView : mainView}
       </Box>
     </ThemeProvider>
   );
