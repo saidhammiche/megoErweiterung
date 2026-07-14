@@ -57,7 +57,7 @@ const theme = createTheme({
 // =================== LIENS ===================
 const BACKEND_URL = 'http://192.168.1.20:4001';
 const APP_URL = 'http://192.168.1.20:5000/';
-const GRAFANA_URL = 'http://192.168.1.20:3000/d/adlddrl/monitoring-des-stromverbrauchs-e28093-me180e2809c?orgId=1&from=now-15m&to=now&timezone=browser&var-kanal=CH16&refresh=5s';
+const GRAFANA_URL = 'http://192.168.1.20:3000/d/adp8rnw/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=CH18&refresh=5s';
 const CONFIG_URL = 'http://192.168.1.20:5000?view=config';
 const ENERGY_URL = 'http://192.168.1.20:5000?view=energy';
 // ✅ Vue Sensor-Bezeichnung développée dans l'app mego elle-même (App_20sensors.jsx)
