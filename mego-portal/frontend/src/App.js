@@ -454,6 +454,34 @@ function App() {
           </CardActionArea>
         </Card>
       </Box>
+
+      <Box sx={{ maxWidth: '900px', mx: 'auto', mt: 5 }}>
+        <Card sx={{ p: 4, bgcolor: '#ffffff', borderRadius: 4, boxShadow: 3 }}>
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <SpeedIcon sx={{ color: theme.palette.primary.main }} />
+                <Typography variant="h6" fontWeight={700}>Daten verwalten</Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: '#4a627a' }}>
+                Greifen Sie in Echtzeit auf alle Messkanäle zu: Strom, Wirkleistung, Spannung und Energie
+                werden kontinuierlich erfasst und live dargestellt — für eine präzise Überwachung Ihrer
+                industriellen Anlage.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <DeviceHubIcon sx={{ color: theme.palette.primary.main }} />
+                <Typography variant="h6" fontWeight={700}>Kundendaten</Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: '#4a627a' }}>
+                Behalten Sie die Zuordnung Ihrer Sensoren im Blick: jeder Sensor und seine Kanäle werden
+                übersichtlich dargestellt — für eine klare Nachverfolgung Ihrer Messpunkte.
+              </Typography>
+            </Grid>
+          </Grid>
+        </Card>
+      </Box>
     </Container>
   );
 
@@ -477,6 +505,34 @@ function App() {
             <Typography variant="h5" fontWeight={700}>Sensor</Typography>
             <Typography variant="body2" color="text.secondary">Sensor-Bezeichnung verwalten</Typography>
           </CardActionArea>
+        </Card>
+      </Box>
+
+      <Box sx={{ maxWidth: '900px', mx: 'auto', mt: 5 }}>
+        <Card sx={{ p: 4, bgcolor: '#ffffff', borderRadius: 4, boxShadow: 3 }}>
+          <Grid container spacing={4}>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <SettingsIcon sx={{ color: theme.palette.primary.main }} />
+                <Typography variant="h6" fontWeight={700}>Kanal Konfiguration</Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: '#4a627a' }}>
+                Definieren Sie die technischen Parameter jedes Messkanals: Bezeichnung, Schwellwert und
+                Höchstwert lassen sich individuell anpassen — für eine präzise und zuverlässige
+                Messgenauigkeit Ihrer Anlage.
+              </Typography>
+            </Grid>
+            <Grid item xs={12} md={6}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <DeviceHubIcon sx={{ color: theme.palette.primary.main }} />
+                <Typography variant="h6" fontWeight={700}>Sensor</Typography>
+              </Box>
+              <Typography variant="body2" sx={{ color: '#4a627a' }}>
+                Vergeben Sie eine kundenspezifische Bezeichnung für jeden Sensor und Kanal — für eine
+                klare, verständliche Kennzeichnung in Ihrer Kundendokumentation.
+              </Typography>
+            </Grid>
+          </Grid>
         </Card>
       </Box>
     </Container>
