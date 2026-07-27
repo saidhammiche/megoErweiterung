@@ -107,29 +107,25 @@ const MessekofferStatusNavbar = () => {
 
   return (
     <Tooltip title={isOnline ? "Messekoffer erreichbar" : "Messekoffer nicht erreichbar - Netzwerk prüfen"}>
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 0.8, 
-        bgcolor: isOnline ? '#e8f5e9' : '#ffebee',
-        px: 1.5, 
-        py: 0.5, 
-        borderRadius: 3,
-        border: `1px solid ${isOnline ? '#81c784' : '#ef9a9a'}`,
-        transition: 'all 0.3s ease'
+      <Box sx={{
+        display: 'inline-flex',
+        alignItems: 'center',
+        width: 'fit-content',
+        gap: 0.3,
+        px: 0.4,
+        py: 0.2,
+        borderRadius: 2,
+        border: `1px solid ${isOnline ? '#81c784' : '#ef9a9a'}`
       }}>
         {isOnline ? (
-          <WifiIcon sx={{ color: '#4caf50', fontSize: 18 }} />
+          <WifiIcon sx={{ color: '#4caf50', fontSize: 16 }} />
         ) : (
-          <WifiOffIcon sx={{ color: '#ef5350', fontSize: 18 }} />
+          <WifiOffIcon sx={{ color: '#ef5350', fontSize: 16 }} />
         )}
-        <Typography variant="caption" sx={{ fontWeight: 500, color: isOnline ? '#2e7d32' : '#c62828' }}>
-          mE180 {isOnline ? 'Online' : 'Offline'}
-        </Typography>
-        <Box sx={{ 
-          width: 8, 
-          height: 8, 
-          borderRadius: '50%', 
+        <Box sx={{
+          width: 8,
+          height: 8,
+          borderRadius: '50%',
           bgcolor: isOnline ? '#4caf50' : '#ef5350',
           animation: isOnline ? 'pulse 1.5s infinite' : 'none',
           '@keyframes pulse': {
@@ -138,6 +134,9 @@ const MessekofferStatusNavbar = () => {
             '100%': { opacity: 1, transform: 'scale(1)' }
           }
         }} />
+        <Typography variant="caption" sx={{ fontWeight: 500, color: isOnline ? '#2e7d32' : '#c62828' }}>
+          mE180 {isOnline ? 'Online' : 'Offline'}
+        </Typography>
       </Box>
     </Tooltip>
   );
