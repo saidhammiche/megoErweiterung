@@ -185,7 +185,8 @@ const TimeSyncView = () => {
 
   useEffect(() => {
     fetchDeviceTime(true);
-    const interval = setInterval(() => fetchDeviceTime(false), 3000);
+    // ✅ Rafraîchissement chaque seconde (au lieu de 3s)
+    const interval = setInterval(() => fetchDeviceTime(false), 1000);
     return () => clearInterval(interval);
   }, []);
 
