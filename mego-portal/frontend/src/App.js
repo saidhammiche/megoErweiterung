@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import {
   Box, Container, Typography, Card, CardActionArea,
-  Grid, AppBar, Toolbar, Button, Alert, CircularProgress, IconButton, Tooltip
+  Grid, AppBar, Toolbar, Button, Alert, CircularProgress, IconButton, Tooltip, Chip
 } from '@mui/material';
 import AnalyticsIcon from '@mui/icons-material/Analytics';
 import DashboardCustomizeIcon from '@mui/icons-material/DashboardCustomize';
@@ -19,21 +19,52 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import BatteryChargingFullIcon from '@mui/icons-material/BatteryChargingFull';
 import WifiIcon from '@mui/icons-material/Wifi';
 import WifiOffIcon from '@mui/icons-material/WifiOff';
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutlineOutlined';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import SyncIcon from '@mui/icons-material/Sync';
+
+// ── Design-Tokens (Enterprise / Industrie) ─────────────────────────────────
+// Gleiche Sprache wie im restlichen mE2go-Frontend: neutrale Flächen, ein
+// ruhiger Blauton als Marke, klare Statusfarben statt generischer Bunttöne.
+const INK        = '#111827';
+const INK_MUTED  = '#667085';
+const SURFACE    = '#F3F5F7';
+const PANEL      = '#FFFFFF';
+const BORDER     = '#E3E6EB';
+const SUCCESS    = '#1E8A5D';
+const SUCCESS_BG = '#E7F5EE';
+const DANGER     = '#C0392B';
+const DANGER_BG  = '#FBEAE8';
+const BRAND      = '#0a5e8c';
+const BRAND_BG   = '#E9F2F7';
+const ACCENT     = '#e67e22';
+const ACCENT_BG  = '#FCEEE0';
+const MONO_FONT    = '"IBM Plex Mono","JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace';
+const DISPLAY_FONT = '"IBM Plex Sans","Inter","Segoe UI", sans-serif';
 
 const theme = createTheme({
   palette: {
-    primary: { main: '#0a5e8c' },
-    secondary: { main: '#e67e22' },
-    success: { main: '#2c7a4d' },
-    error: { main: '#d32f2f' }
+    primary:   { main: BRAND },
+    secondary: { main: ACCENT },
+    success:   { main: SUCCESS },
+    error:     { main: DANGER }
   },
-  shape: { borderRadius: 20 },
+  typography: {
+    fontFamily: DISPLAY_FONT,
+    h4: { fontWeight: 700, letterSpacing: '-0.01em' },
+    h5: { fontWeight: 700 },
+    h6: { fontWeight: 700 },
+  },
+  shape: { borderRadius: 14 },
   components: {
     MuiCard: {
       styleOverrides: {
         root: {
-          transition: 'transform 0.2s, box-shadow 0.2s',
-          '&:hover': { transform: 'translateY(-4px)', boxShadow: 6 }
+          border: `1px solid ${BORDER}`,
+          boxShadow: 'none',
+          transition: 'transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease',
+          '&:hover': { transform: 'translateY(-3px)', boxShadow: '0 10px 24px rgba(17,24,39,0.08)', borderColor: '#D2D7DE' }
         }
       }
     },
@@ -55,11 +86,15 @@ const theme = createTheme({
 
 // =================== LIENS ===================
 const BACKEND_URL = 'http://192.168.1.20:4001';
-const APP_URL = 'http://192.168.1.20:50000/';
-const GRAFANA_URL = 'http://192.168.1.20:3000/d/adlddrl/monitoring-des-stromverbrauchs-e28093-me180e2809c?orgId=1&from=now-15m&to=now&timezone=browser&var-kanal=CH16&refresh=5s';
-const CONFIG_URL = 'http://192.168.1.20:50000?view=config';
-const ENERGY_URL = 'http://192.168.1.20:50000?view=energy';
+const APP_URL = 'http://192.168.1.20:5000/';
+const GRAFANA_URL = 'http://192.168.1.20:3000/d/adkdpz6/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=CH1&refresh=5s';
+const CONFIG_URL = 'http://192.168.1.20:5000?view=config';
+const ENERGY_URL = 'http://192.168.1.20:5000?view=energy';
 const DEFAULT_MESSEKOPFER_IP = '192.168.1.7';
+
+// ✅ Fréquence de lecture de l'heure du Messkoffer : chaque seconde (au lieu
+// de 3s) pour un affichage vraiment "temps réel" en regard de l'horloge PC.
+const DEVICE_TIME_POLL_MS = 1000;
 
 // =================== HOOK POUR LE STATUT MESSEKOFFER ===================
 const useMessekofferStatus = () => {
@@ -93,39 +128,39 @@ const MessekofferStatusNavbar = () => {
 
   if (checking) {
     return (
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: '#f5f5f5', px: 1.5, py: 0.5, borderRadius: 2 }}>
-        <CircularProgress size={14} />
-        <Typography variant="caption" color="text.secondary">Connexion...</Typography>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, bgcolor: SURFACE, px: 1.5, py: 0.6, borderRadius: 20, border: `1px solid ${BORDER}` }}>
+        <CircularProgress size={13} sx={{ color: INK_MUTED }} />
+        <Typography variant="caption" sx={{ color: INK_MUTED, fontWeight: 500 }}>Verbindung…</Typography>
       </Box>
     );
   }
 
   return (
-    <Tooltip title={isOnline ? "Messekoffer erreichbar" : "Messekoffer nicht erreichbar - Netzwerk prüfen"}>
-      <Box sx={{ 
-        display: 'flex', 
-        alignItems: 'center', 
-        gap: 0.8, 
-        bgcolor: isOnline ? '#e8f5e9' : '#ffebee',
-        px: 1.5, 
-        py: 0.5, 
-        borderRadius: 3,
-        border: `1px solid ${isOnline ? '#81c784' : '#ef9a9a'}`,
+    <Tooltip title={isOnline ? 'Messekoffer erreichbar' : 'Messekoffer nicht erreichbar - Netzwerk prüfen'}>
+      <Box sx={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 0.8,
+        bgcolor: isOnline ? SUCCESS_BG : DANGER_BG,
+        px: 1.5,
+        py: 0.6,
+        borderRadius: 20,
+        border: `1px solid ${isOnline ? '#BFE3D2' : '#F3C9C4'}`,
         transition: 'all 0.3s ease'
       }}>
         {isOnline ? (
-          <WifiIcon sx={{ color: '#4caf50', fontSize: 18 }} />
+          <WifiIcon sx={{ color: SUCCESS, fontSize: 17 }} />
         ) : (
-          <WifiOffIcon sx={{ color: '#ef5350', fontSize: 18 }} />
+          <WifiOffIcon sx={{ color: DANGER, fontSize: 17 }} />
         )}
-        <Typography variant="caption" sx={{ fontWeight: 500, color: isOnline ? '#2e7d32' : '#c62828' }}>
+        <Typography variant="caption" sx={{ fontWeight: 700, color: isOnline ? SUCCESS : DANGER, letterSpacing: '0.2px' }}>
           mE180 {isOnline ? 'Online' : 'Offline'}
         </Typography>
-        <Box sx={{ 
-          width: 8, 
-          height: 8, 
-          borderRadius: '50%', 
-          bgcolor: isOnline ? '#4caf50' : '#ef5350',
+        <Box sx={{
+          width: 7,
+          height: 7,
+          borderRadius: '50%',
+          bgcolor: isOnline ? SUCCESS : DANGER,
           animation: isOnline ? 'pulse 1.5s infinite' : 'none',
           '@keyframes pulse': {
             '0%': { opacity: 1, transform: 'scale(1)' },
@@ -180,7 +215,8 @@ const TimeSyncView = () => {
 
   useEffect(() => {
     fetchDeviceTime(true);
-    const interval = setInterval(() => fetchDeviceTime(false), 3000);
+    // ✅ Rafraîchissement chaque seconde (au lieu de 3s) pour suivre l'horloge PC de près.
+    const interval = setInterval(() => fetchDeviceTime(false), DEVICE_TIME_POLL_MS);
     return () => clearInterval(interval);
   }, []);
 
@@ -219,53 +255,68 @@ const TimeSyncView = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 5 }}>
       <Box sx={{ textAlign: 'center', mb: 5 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700, color: '#1e2a3a' }}>Zeitsynchronisation</Typography>
-        <Typography variant="body1" sx={{ color: '#5a6e7c', mt: 1 }}>PC-Zeit mit dem Messekoffer abgleichen</Typography>
+        <Typography variant="h4" sx={{ color: INK }}>Zeitsynchronisation</Typography>
+        <Typography variant="body1" sx={{ color: INK_MUTED, mt: 1 }}>PC-Zeit mit dem Messekoffer abgleichen</Typography>
       </Box>
 
-      <Grid container spacing={4} direction="column">
+      <Grid container spacing={3} direction="column">
         <Grid item xs={12} sx={{ display: 'flex' }}>
-          <Card sx={{ width: '100%', bgcolor: '#e8f5e9', p: 4, textAlign: 'center' }}>
-            <AccessTimeIcon sx={{ fontSize: 56, color: '#0a5e8c', mb: 2 }} />
-            <Typography variant="h6" fontWeight={600}>Aktuelle PC‑Zeit</Typography>
-            <Typography variant="h4" sx={{ fontFamily: 'monospace', bgcolor: '#f8f9fa', py: 2, borderRadius: 2, mb: 2 }}>
+          <Card sx={{ width: '100%', bgcolor: PANEL, p: 4, textAlign: 'center' }}>
+            <Box sx={{ display: 'inline-flex', width: 64, height: 64, borderRadius: '50%', bgcolor: BRAND_BG, alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+              <AccessTimeIcon sx={{ fontSize: 32, color: BRAND }} />
+            </Box>
+            <Typography variant="h6" sx={{ color: INK }}>Aktuelle PC-Zeit</Typography>
+            <Typography variant="h4" sx={{
+              fontFamily: MONO_FONT, fontWeight: 700, bgcolor: '#12181f', color: '#7CC7E8',
+              py: 2, borderRadius: 2, mb: 0, letterSpacing: '1px'
+            }}>
               {formatDateTime(pcTime)}
             </Typography>
           </Card>
         </Grid>
         <Grid item xs={12} sx={{ display: 'flex' }}>
-          <Card sx={{ width: '100%', bgcolor: '#e8f5e9', p: 4, textAlign: 'center' }}>
-            <PrecisionManufacturingIcon sx={{ fontSize: 56, color: '#e67e22', mb: 2 }} />
-            <Typography variant="h6" fontWeight={600}>Uhrzeit des Messekoffers</Typography>
+          <Card sx={{ width: '100%', bgcolor: PANEL, p: 4, textAlign: 'center' }}>
+            <Box sx={{ display: 'inline-flex', width: 64, height: 64, borderRadius: '50%', bgcolor: ACCENT_BG, alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+              <PrecisionManufacturingIcon sx={{ fontSize: 32, color: ACCENT }} />
+            </Box>
+            <Typography variant="h6" sx={{ color: INK }}>Uhrzeit des Messekoffers</Typography>
             {loadingDeviceTime ? (
-              <CircularProgress size={40} sx={{ my: 2 }} />
+              <Box sx={{ py: 3 }}><CircularProgress size={32} sx={{ color: ACCENT }} /></Box>
             ) : deviceTimeError ? (
-              <Alert severity="error">{deviceTimeError}</Alert>
+              <Alert severity="error" sx={{ mt: 1, borderRadius: 2 }}>{deviceTimeError}</Alert>
             ) : (
-              <Typography variant="h4" sx={{ fontFamily: 'monospace', bgcolor: '#f8f9fa', py: 2, borderRadius: 2, mb: 2, color: '#e67e22' }}>
+              <Typography variant="h4" sx={{
+                fontFamily: MONO_FONT, fontWeight: 700, bgcolor: '#12181f', color: '#F0B27A',
+                py: 2, borderRadius: 2, mb: 0, letterSpacing: '1px'
+              }}>
                 {deviceTime || '--:--:--'}
               </Typography>
             )}
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={() => fetchDeviceTime(true)} disabled={loadingDeviceTime} sx={{ borderRadius: 3 }}>
-              Aktualisieren
-            </Button>
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 2 }}>
+              <Chip size="small" icon={<SyncIcon sx={{ fontSize: '14px !important' }} />} label={`Aktualisierung jede Sekunde`}
+                sx={{ bgcolor: SURFACE, color: INK_MUTED, fontWeight: 600, fontSize: '0.7rem' }} />
+              <Button variant="outlined" size="small" startIcon={<RefreshIcon />} onClick={() => fetchDeviceTime(true)} disabled={loadingDeviceTime}
+                sx={{ borderRadius: 20, textTransform: 'none', borderColor: BORDER, color: INK }}>
+                Jetzt aktualisieren
+              </Button>
+            </Box>
           </Card>
         </Grid>
       </Grid>
 
-      <Card sx={{ mt: 5, p: 4, bgcolor: '#ffffff', borderRadius: 4, boxShadow: 3 }}>
+      <Card sx={{ mt: 4, p: 4, bgcolor: PANEL }}>
         <Box sx={{ mb: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, flexWrap: 'wrap' }}>
-            <Typography variant="h6" fontWeight={600} sx={{ color: '#1e2a3a' }}>
+            <Typography variant="h6" sx={{ color: INK }}>
               Netzwerkkonfiguration (Messekoffer)
             </Typography>
             {isMessekofferOnline !== null && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                <Box sx={{ 
-                  width: 8, 
-                  height: 8, 
-                  borderRadius: '50%', 
-                  bgcolor: isMessekofferOnline ? '#4caf50' : '#ef5350',
+                <Box sx={{
+                  width: 8,
+                  height: 8,
+                  borderRadius: '50%',
+                  bgcolor: isMessekofferOnline ? SUCCESS : DANGER,
                   animation: isMessekofferOnline ? 'pulse 1.5s infinite' : 'none',
                   '@keyframes pulse': {
                     '0%': { opacity: 1, transform: 'scale(1)' },
@@ -273,90 +324,96 @@ const TimeSyncView = () => {
                     '100%': { opacity: 1, transform: 'scale(1)' }
                   }
                 }} />
-                <Typography variant="caption" sx={{ 
-                  fontWeight: 500, 
-                  color: isMessekofferOnline ? '#4caf50' : '#ef5350'
+                <Typography variant="caption" sx={{
+                  fontWeight: 700,
+                  color: isMessekofferOnline ? SUCCESS : DANGER
                 }}>
                   {isMessekofferOnline ? 'mE180 Online' : 'mE180 Offline'}
                 </Typography>
               </Box>
             )}
           </Box>
-          <Box sx={{ 
-            mt: 1.5, 
-            borderBottom: `2px solid ${isMessekofferOnline === true ? '#4caf50' : isMessekofferOnline === false ? '#ef5350' : '#ddd'}`,
+          <Box sx={{
+            mt: 1.5,
+            borderBottom: `3px solid ${isMessekofferOnline === true ? SUCCESS : isMessekofferOnline === false ? DANGER : BORDER}`,
             width: '60px',
+            borderRadius: 4,
             transition: 'all 0.3s ease'
           }} />
         </Box>
-        
+
         {isMessekofferOnline === true ? (
-          <Button 
-            variant="contained" 
-            fullWidth 
-            onClick={handleSync} 
+          <Button
+            variant="contained"
+            fullWidth
+            onClick={handleSync}
             disabled={loading}
             startIcon={!loading && <RefreshIcon />}
-            sx={{ 
-              bgcolor: '#2c7a4d',
-              borderRadius: 5,
+            sx={{
+              bgcolor: SUCCESS,
+              borderRadius: 20,
               fontSize: '1rem',
               py: 1.5,
               textTransform: 'none',
-              fontWeight: 600,
-              transition: 'all 0.3s ease',
+              fontWeight: 700,
+              boxShadow: 'none',
+              transition: 'all 0.2s ease',
               '&:hover': {
-                bgcolor: '#1b5e2a',
-                transform: 'scale(1.01)'
+                bgcolor: '#166B48',
+                boxShadow: 'none'
               }
             }}
           >
             {loading ? (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CircularProgress size={22} sx={{ color: 'white' }} />
-                <span>Synchronisiere...</span>
+                <CircularProgress size={20} sx={{ color: 'white' }} />
+                <span>Synchronisiere…</span>
               </Box>
             ) : (
-              '📡 PC-Zeit auf Messekoffer übertragen'
+              'PC-Zeit auf Messekoffer übertragen'
             )}
           </Button>
         ) : isMessekofferOnline === false ? (
-          <Button 
-            variant="contained" 
-            fullWidth 
+          <Button
+            variant="contained"
+            fullWidth
             disabled
-            sx={{ 
-              bgcolor: '#9e9e9e',
-              borderRadius: 5,
+            sx={{
+              bgcolor: BORDER,
+              color: INK_MUTED,
+              borderRadius: 20,
               fontSize: '1rem',
               py: 1.5,
               textTransform: 'none',
-              fontWeight: 600,
+              fontWeight: 700,
+              boxShadow: 'none',
               cursor: 'not-allowed'
             }}
           >
-            🔒 Synchronisation nicht möglich — Messekoffer offline
+            Synchronisation nicht möglich — Messekoffer offline
           </Button>
         ) : (
-          <Button 
-            variant="contained" 
-            fullWidth 
+          <Button
+            variant="contained"
+            fullWidth
             disabled
-            sx={{ 
-              bgcolor: '#9e9e9e',
-              borderRadius: 5,
+            sx={{
+              bgcolor: BORDER,
+              color: INK_MUTED,
+              borderRadius: 20,
               fontSize: '1rem',
               py: 1.5,
               textTransform: 'none',
-              fontWeight: 600
+              fontWeight: 700,
+              boxShadow: 'none'
             }}
           >
-            ⏳ Verbindung wird geprüft...
+            Verbindung wird geprüft…
           </Button>
         )}
-        
+
         {message.text && (
-          <Alert severity={message.severity} sx={{ mt: 3, borderRadius: 3 }}>
+          <Alert severity={message.severity} sx={{ mt: 3, borderRadius: 2 }}>
             {message.text}
           </Alert>
         )}
@@ -376,49 +433,79 @@ function App() {
   };
 
   const cards = [
-    { title: 'Live Daten', desc: 'Live‑Stromdaten analysieren', icon: <AnalyticsIcon sx={{ fontSize: 64, color: theme.palette.primary.main }} />, url: APP_URL, action: null },
-    { title: 'Dashboard', desc: 'Grafana Dashboard', icon: <DashboardCustomizeIcon sx={{ fontSize: 64, color: theme.palette.secondary.main }} />, url: GRAFANA_URL, action: null },
-    { title: 'Einstellungen', desc: 'Konfiguration & Synchronisation', icon: <TuneIcon sx={{ fontSize: 64, color: theme.palette.success.main }} />, url: null, action: () => setShowEinstellungen(true) }
+    {
+      title: 'Live Daten', desc: 'Live-Stromdaten analysieren',
+      icon: <AnalyticsIcon sx={{ fontSize: 44, color: BRAND }} />, iconBg: BRAND_BG, accent: BRAND,
+      url: APP_URL, action: null
+    },
+    {
+      title: 'Dashboard', desc: 'Grafana Dashboard',
+      icon: <DashboardCustomizeIcon sx={{ fontSize: 44, color: ACCENT }} />, iconBg: ACCENT_BG, accent: ACCENT,
+      url: GRAFANA_URL, action: null
+    },
+    {
+      title: 'Einstellungen', desc: 'Konfiguration & Synchronisation',
+      icon: <TuneIcon sx={{ fontSize: 44, color: SUCCESS }} />, iconBg: SUCCESS_BG, accent: SUCCESS,
+      url: null, action: () => setShowEinstellungen(true)
+    }
   ];
 
   const featureIcons = [
-    { icon: <SpeedIcon sx={{ fontSize: 48, color: theme.palette.primary.main }} />, title: 'Echtzeit-Monitoring', desc: 'Stromdaten in Millisekunden' },
-    { icon: <PrecisionManufacturingIcon sx={{ fontSize: 48, color: theme.palette.secondary.main }} />, title: 'Industrie-4.0-ready', desc: 'Präzise Messung & Analyse' },
-    { icon: <CloudSyncIcon sx={{ fontSize: 48, color: theme.palette.success.main }} />, title: 'Nahtlose Integration', desc: 'Grafana, REST-API, MQTT' },
-    { icon: <SecurityIcon sx={{ fontSize: 48, color: theme.palette.error.main }} />, title: 'Sichere Lokale Instanz', desc: 'Daten verlassen nie das Netzwerk' }
+    { icon: <SpeedIcon sx={{ fontSize: 30, color: BRAND }} />, bg: BRAND_BG, title: 'Echtzeit-Monitoring', desc: 'Stromdaten in Millisekunden' },
+    { icon: <PrecisionManufacturingIcon sx={{ fontSize: 30, color: ACCENT }} />, bg: ACCENT_BG, title: 'Industrie-4.0-ready', desc: 'Präzise Messung & Analyse' },
+    { icon: <CloudSyncIcon sx={{ fontSize: 30, color: SUCCESS }} />, bg: SUCCESS_BG, title: 'Nahtlose Integration', desc: 'Grafana, REST-API, MQTT' },
+    { icon: <SecurityIcon sx={{ fontSize: 30, color: DANGER }} />, bg: DANGER_BG, title: 'Sichere lokale Instanz', desc: 'Daten verlassen nie das Netzwerk' }
   ];
 
   const mainView = (
     <Box sx={{ py: 6, position: 'relative', minHeight: '80vh' }}>
       <Box sx={{ textAlign: 'center', mb: 5 }}>
-        <Typography variant="h4" fontWeight={800}>Willkommen im lokalen mE2go-Portal</Typography>
-        <Typography variant="h5">Was wollen Sie machen?</Typography>
+        <Typography variant="h4" sx={{ color: INK }}>Willkommen im lokalen mE2go-Portal</Typography>
+        <Typography variant="h6" sx={{ color: INK_MUTED, fontWeight: 500, mt: 0.5 }}>Was wollen Sie machen?</Typography>
       </Box>
       <Box sx={{ maxWidth: '1400px', mx: 'auto', px: { xs: 2, sm: 4, md: 6 } }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 4, mb: 6 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 3, mb: 6 }}>
           {featureIcons.map((item, idx) => (
-            <Box key={idx} sx={{ textAlign: 'center' }}>
-              {item.icon}
-              <Typography variant="body2" fontWeight={600}>{item.title}</Typography>
-              <Typography variant="caption" color="text.secondary">{item.desc}</Typography>
+            <Box key={idx} sx={{
+              textAlign: 'center', p: 2.5, borderRadius: 3, border: `1px solid ${BORDER}`, bgcolor: PANEL
+            }}>
+              <Box sx={{
+                display: 'inline-flex', width: 56, height: 56, borderRadius: '50%', bgcolor: item.bg,
+                alignItems: 'center', justifyContent: 'center', mb: 1.5
+              }}>
+                {item.icon}
+              </Box>
+              <Typography variant="body2" sx={{ color: INK, fontWeight: 700 }}>{item.title}</Typography>
+              <Typography variant="caption" sx={{ color: INK_MUTED }}>{item.desc}</Typography>
             </Box>
           ))}
         </Box>
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 4 }}>
           {cards.map((card, idx) => (
-            <Card key={idx} sx={{ cursor: 'pointer', bgcolor: '#e8f5e9', height: '100%' }} onClick={card.action || (() => window.location.href = card.url)}>
+            <Card key={idx} sx={{
+              cursor: 'pointer', bgcolor: PANEL, height: '100%', position: 'relative', overflow: 'hidden'
+            }} onClick={card.action || (() => window.location.href = card.url)}>
+              <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: card.accent }} />
               <CardActionArea sx={{ p: 4, minHeight: 260, flexDirection: 'column' }}>
-                {card.icon}
-                <Typography variant="h5" sx={{ mt: 2, fontWeight: 700 }}>{card.title}</Typography>
-                <Typography variant="body2" color="text.secondary">{card.desc}</Typography>
+                <Box sx={{
+                  display: 'inline-flex', width: 84, height: 84, borderRadius: '50%', bgcolor: card.iconBg,
+                  alignItems: 'center', justifyContent: 'center', mb: 2
+                }}>
+                  {card.icon}
+                </Box>
+                <Typography variant="h5" sx={{ mt: 1, color: INK }}>{card.title}</Typography>
+                <Typography variant="body2" sx={{ color: INK_MUTED, mt: 0.5 }}>{card.desc}</Typography>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 2, color: card.accent, fontWeight: 700, fontSize: '0.8rem' }}>
+                  Öffnen <ArrowForwardIcon sx={{ fontSize: 16 }} />
+                </Box>
               </CardActionArea>
             </Card>
           ))}
         </Box>
       </Box>
       <Box sx={{ position: 'absolute', bottom: 24, right: 24, display: 'flex', alignItems: 'center', gap: 1 }}>
-        <BuildIcon sx={{ fontSize: 20, color: '#5a7a9a' }} />
-        <Typography variant="caption" sx={{ color: '#5a7a9a', fontWeight: 'bold' }}>.manageE CI</Typography>
+        <BuildIcon sx={{ fontSize: 18, color: INK_MUTED }} />
+        <Typography variant="caption" sx={{ color: INK_MUTED, fontWeight: 700 }}>.manageE CI</Typography>
       </Box>
     </Box>
   );
@@ -426,51 +513,66 @@ function App() {
   const einstellungenView = (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Box sx={{ textAlign: 'center', mb: 5 }}>
-        <Typography variant="h4" fontWeight={700}>Einstellungen & System</Typography>
-        <Typography variant="body1" sx={{ color: '#5a6e7c' }}>Konfigurieren Sie Ihre Mess192.168.1.20 oder synchronisieren Sie die Systemzeit.</Typography>
+        <Typography variant="h4" sx={{ color: INK }}>Einstellungen &amp; System</Typography>
+        <Typography variant="body1" sx={{ color: INK_MUTED }}>Konfigurieren Sie Ihre Messkoffer oder synchronisieren Sie die Systemzeit.</Typography>
       </Box>
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap', mb: 5 }}>
-        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = CONFIG_URL}>
+        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: PANEL, cursor: 'pointer', position: 'relative', overflow: 'hidden' }} onClick={() => window.location.href = CONFIG_URL}>
+          <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: BRAND }} />
           <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
-            <SettingsIcon sx={{ fontSize: 72, color: theme.palette.primary.main }} />
-            <Typography variant="h5" fontWeight={700}>Kanäle konfigurieren</Typography>
-            <Typography variant="body2" color="text.secondary">Parameter der Messkanäle anpassen</Typography>
-            <Typography variant="caption">Stromkanäle • Spannung • Frequenz • Grenzwerte</Typography>
+            <Box sx={{ display: 'inline-flex', width: 88, height: 88, borderRadius: '50%', bgcolor: BRAND_BG, alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+              <SettingsIcon sx={{ fontSize: 46, color: BRAND }} />
+            </Box>
+            <Typography variant="h5" sx={{ color: INK }}>Kanäle konfigurieren</Typography>
+            <Typography variant="body2" sx={{ color: INK_MUTED, mt: 0.5 }}>Parameter der Messkanäle anpassen</Typography>
+            <Typography variant="caption" sx={{ color: INK_MUTED, display: 'block', mt: 1 }}>Stromkanäle · Spannung · Frequenz · Grenzwerte</Typography>
           </CardActionArea>
         </Card>
-        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => setShowTimeSync(true)}>
+        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: PANEL, cursor: 'pointer', position: 'relative', overflow: 'hidden' }} onClick={() => setShowTimeSync(true)}>
+          <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: ACCENT }} />
           <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
-            <AccessTimeIcon sx={{ fontSize: 72, color: theme.palette.secondary.main }} />
-            <Typography variant="h5" fontWeight={700}>Zeitsynchronisation</Typography>
-            <Typography variant="body2" color="text.secondary">Uhrzeit zwischen Messekoffer und PC abgleichen</Typography>
+            <Box sx={{ display: 'inline-flex', width: 88, height: 88, borderRadius: '50%', bgcolor: ACCENT_BG, alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+              <AccessTimeIcon sx={{ fontSize: 46, color: ACCENT }} />
+            </Box>
+            <Typography variant="h5" sx={{ color: INK }}>Zeitsynchronisation</Typography>
+            <Typography variant="body2" sx={{ color: INK_MUTED, mt: 0.5 }}>Uhrzeit zwischen Messekoffer und PC abgleichen</Typography>
           </CardActionArea>
         </Card>
-        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: '#e8f5e9', cursor: 'pointer' }} onClick={() => window.location.href = ENERGY_URL}>
+        <Card sx={{ width: { xs: '100%', sm: '320px', md: '360px' }, bgcolor: PANEL, cursor: 'pointer', position: 'relative', overflow: 'hidden' }} onClick={() => window.location.href = ENERGY_URL}>
+          <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, height: 4, bgcolor: SUCCESS }} />
           <CardActionArea sx={{ p: 4, textAlign: 'center' }}>
-            <BatteryChargingFullIcon sx={{ fontSize: 72, color: theme.palette.success.main }} />
-            <Typography variant="h5" fontWeight={700}>Kanal Zähler</Typography>
-            <Typography variant="body2" color="text.secondary">Energie kumuliert & temporär verwalten</Typography>
-            <Typography variant="caption">18 Kanäle • Energiewerte • Änderungshistorie</Typography>
+            <Box sx={{ display: 'inline-flex', width: 88, height: 88, borderRadius: '50%', bgcolor: SUCCESS_BG, alignItems: 'center', justifyContent: 'center', mb: 2 }}>
+              <BatteryChargingFullIcon sx={{ fontSize: 46, color: SUCCESS }} />
+            </Box>
+            <Typography variant="h5" sx={{ color: INK }}>Kanal Zähler</Typography>
+            <Typography variant="body2" sx={{ color: INK_MUTED, mt: 0.5 }}>Energie kumuliert &amp; temporär verwalten</Typography>
+            <Typography variant="caption" sx={{ color: INK_MUTED, display: 'block', mt: 1 }}>18 Kanäle · Energiewerte · Änderungshistorie</Typography>
           </CardActionArea>
         </Card>
       </Box>
       <Box sx={{ maxWidth: '800px', mx: 'auto' }}>
-        <Card sx={{ p: 4, bgcolor: '#ffffff', borderRadius: 4 }}>
+        <Card sx={{ p: 4, bgcolor: PANEL }}>
           <Grid container spacing={3}>
             <Grid item xs={12} md={6}>
-              <Typography variant="h6" fontWeight={600}>ℹ️ Systeminformationen</Typography>
-              <Box component="ul" sx={{ pl: 2, color: '#4a627a' }}>
+              <Box display="flex" alignItems="center" gap={1} sx={{ mb: 1 }}>
+                <InfoOutlinedIcon sx={{ fontSize: 20, color: BRAND }} />
+                <Typography variant="h6" sx={{ color: INK }}>Systeminformationen</Typography>
+              </Box>
+              <Box component="ul" sx={{ pl: 2.5, color: INK_MUTED, m: 0 }}>
                 <li>mE2go Portal Version 2.1.0</li>
-                <li>Grafana Dashboard: Live‑Daten & Historien</li>
+                <li>Grafana Dashboard: Live-Daten &amp; Historien</li>
               </Box>
             </Grid>
             <Grid item xs={12} md={6}>
-              <Typography variant="h6" fontWeight={600}>🔧 Schnellhilfe</Typography>
-              <Box component="ul" sx={{ pl: 2, color: '#4a627a' }}>
-                <li><strong>Kanäle konfigurieren:</strong> Legen Sie Messbereiche, Skalierung und Einheiten fest.</li>
-                <li><strong>Zeitsynchronisation:</strong> Stellen Sie sicher, dass PC und Messekoffer exakt dieselbe Uhrzeit haben.</li>
-                <li><strong>Kanal Zähler:</strong> Verwalten Sie die kumulierten und temporären Energiewerte pro Kanal.</li>
-                <li><strong>Support:</strong> Bei Problemen wenden Sie sich an Ihren Administrator.</li>
+              <Box display="flex" alignItems="center" gap={1} sx={{ mb: 1 }}>
+                <HelpOutlineIcon sx={{ fontSize: 20, color: ACCENT }} />
+                <Typography variant="h6" sx={{ color: INK }}>Schnellhilfe</Typography>
+              </Box>
+              <Box component="ul" sx={{ pl: 2.5, color: INK_MUTED, m: 0 }}>
+                <li><strong style={{ color: INK }}>Kanäle konfigurieren:</strong> Legen Sie Messbereiche, Skalierung und Einheiten fest.</li>
+                <li><strong style={{ color: INK }}>Zeitsynchronisation:</strong> Stellen Sie sicher, dass PC und Messekoffer exakt dieselbe Uhrzeit haben.</li>
+                <li><strong style={{ color: INK }}>Kanal Zähler:</strong> Verwalten Sie die kumulierten und temporären Energiewerte pro Kanal.</li>
+                <li><strong style={{ color: INK }}>Support:</strong> Bei Problemen wenden Sie sich an Ihren Administrator.</li>
               </Box>
             </Grid>
           </Grid>
@@ -481,15 +583,17 @@ function App() {
 
   return (
     <ThemeProvider theme={theme}>
-      <Box sx={{ minHeight: '100vh', bgcolor: '#eef2f5' }}>
-        <AppBar position="sticky" elevation={0} sx={{ bgcolor: 'white', borderBottom: '1px solid #ddd' }}>
+      <Box sx={{ minHeight: '100vh', bgcolor: SURFACE }}>
+        <AppBar position="sticky" elevation={0} sx={{ bgcolor: PANEL, borderBottom: `1px solid ${BORDER}` }}>
           <Toolbar sx={{ justifyContent: 'space-between' }}>
             <Box display="flex" alignItems="center" gap={1}>
-              {(showEinstellungen || showTimeSync) && <IconButton onClick={handleBackToMain}><ArrowBackIcon /></IconButton>}
-              <Box component="img" src="/logo.png" alt="Logo" sx={{ height: 40, objectFit: 'contain' }} />
+              {(showEinstellungen || showTimeSync) && (
+                <IconButton onClick={handleBackToMain} sx={{ color: INK }}><ArrowBackIcon /></IconButton>
+              )}
+              <Box component="img" src="/logo.png" alt="Logo" sx={{ height: 36, objectFit: 'contain' }} />
             </Box>
             <Box display="flex" alignItems="center" gap={2}>
-              <Typography variant="h6" fontWeight={700}>mE2go | Industrial Control</Typography>
+              <Typography variant="h6" sx={{ color: INK, fontSize: '1.05rem' }}>mE2go | Industrial Control</Typography>
               <MessekofferStatusNavbar />
             </Box>
           </Toolbar>

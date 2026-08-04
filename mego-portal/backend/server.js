@@ -137,6 +137,6 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log('='.repeat(50));
   console.log(`📌 Port: ${PORT}`);
   console.log(`📌 Messekoffer IP: ${MESSEKOPFER_IP}`);
-  console.log(`📌 Test ping: http://localhost:${PORT}/ping-messekoffer`);
+  console.log(`📌 Test ping: http://192.168.1.20:${PORT}/ping-messekoffer`);
   console.log('='.repeat(50) + '\n');
 });

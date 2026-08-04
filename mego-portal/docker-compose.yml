@@ -4,6 +4,7 @@ services:
     build: ./backend
     ports:
       - "4001:4001"
+    restart: unless-stopped
 
   frontend:
     build: ./frontend
@@ -11,3 +12,4 @@ services:
       - "8080:80"
     depends_on:
       - backend
+    restart: unless-stopped
