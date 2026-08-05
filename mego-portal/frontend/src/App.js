@@ -36,6 +36,8 @@ const SUCCESS    = '#1E8A5D';
 const SUCCESS_BG = '#E7F5EE';
 const DANGER     = '#C0392B';
 const DANGER_BG  = '#FBEAE8';
+const WARNING    = '#B7791F';
+const WARNING_BG = '#FBF1DE';
 const BRAND      = '#0a5e8c';
 const BRAND_BG   = '#E9F2F7';
 const ACCENT     = '#e67e22';
@@ -87,10 +89,10 @@ const theme = createTheme({
 // =================== LIENS ===================
 const BACKEND_URL = 'http://192.168.1.20:4001';
 const APP_URL = 'http://192.168.1.20:5000/';
-const GRAFANA_URL = 'http://192.168.1.20:3000/d/adkdpz6/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=CH1&refresh=5s';
+const GRAFANA_URL = 'http://192.168.1.20:3000/d/adkdpz6/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=CH1%20a&refresh=5s';
 const CONFIG_URL = 'http://192.168.1.20:5000?view=config';
 const ENERGY_URL = 'http://192.168.1.20:5000?view=energy';
-const DEFAULT_MESSEKOPFER_IP = '192.168.1.7';
+const DEFAULT_MESSEKOFFER_IP = '192.168.1.7';
 
 // ✅ Fréquence de lecture de l'heure du Messkoffer : chaque seconde (au lieu
 // de 3s) pour un affichage vraiment "temps réel" en regard de l'horloge PC.
@@ -173,6 +175,15 @@ const MessekofferStatusNavbar = () => {
   );
 };
 
+// =================== HELPER: PARSE "DD-MM-YYYY HH:MM:SS" ===================
+const parseDeviceTimeString = (str) => {
+  if (!str) return null;
+  const m = str.match(/^(\d{2})-(\d{2})-(\d{4})\s+(\d{2}):(\d{2}):(\d{2})$/);
+  if (!m) return null;
+  const [, dd, mm, yyyy, hh, min, ss] = m;
+  return new Date(Number(yyyy), Number(mm) - 1, Number(dd), Number(hh), Number(min), Number(ss));
+};
+
 // =================== TIME SYNC VIEW ===================
 const TimeSyncView = () => {
   const [pcTime, setPcTime] = useState(new Date());
@@ -198,7 +209,7 @@ const TimeSyncView = () => {
           // Le backend envoie maintenant directement la date au format DD-MM-YYYY HH:MM:SS
           setDeviceTime(data.messekoffer_datetime);
         } else {
-          setDeviceTime('--:--:--');
+          setDeviceTime(null);
         }
         setDeviceTimeError('');
       } else {
@@ -235,188 +246,245 @@ const TimeSyncView = () => {
       const response = await fetch(`${BACKEND_URL}/sync-time`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ datetime: pcTime.toISOString(), deviceIp: DEFAULT_MESSEKOPFER_IP })
+        body: JSON.stringify({ datetime: pcTime.toISOString(), deviceIp: DEFAULT_MESSEKOFFER_IP })
       });
       if (response.ok) {
-        setMessage({ text: '✅ Synchronisation erfolgreich!', severity: 'success' });
+        setMessage({ text: 'Synchronisation erfolgreich abgeschlossen.', severity: 'success' });
         setTimeout(() => fetchDeviceTime(true), 1000);
       } else {
         throw new Error(`HTTP ${response.status}`);
       }
     } catch (error) {
       console.error(error);
-      setMessage({ text: `❌ Fehler: ${error.message}`, severity: 'error' });
+      setMessage({ text: `Synchronisation fehlgeschlagen: ${error.message}`, severity: 'error' });
     } finally {
       setLoading(false);
       setTimeout(() => setMessage({ text: '', severity: 'success' }), 5000);
     }
   };
 
+  // ── Zeitdifferenz zwischen PC und Messkoffer berechnen ──────────────────
+  const parsedDeviceDate = parseDeviceTimeString(deviceTime);
+  const diffSeconds = parsedDeviceDate ? Math.round((pcTime.getTime() - parsedDeviceDate.getTime()) / 1000) : null;
+  const absDiff = diffSeconds !== null ? Math.abs(diffSeconds) : null;
+
+  let diffStatus = 'unknown'; // 'inSync' | 'minor' | 'outOfSync' | 'unknown'
+  if (absDiff !== null) {
+    if (absDiff <= 1) diffStatus = 'inSync';
+    else if (absDiff <= 5) diffStatus = 'minor';
+    else diffStatus = 'outOfSync';
+  }
+
+  const diffColor = {
+    inSync: SUCCESS, minor: WARNING, outOfSync: DANGER, unknown: INK_MUTED
+  }[diffStatus];
+  const diffBg = {
+    inSync: SUCCESS_BG, minor: WARNING_BG, outOfSync: DANGER_BG, unknown: SURFACE
+  }[diffStatus];
+  const diffLabel = diffStatus === 'unknown'
+    ? 'Kein Vergleich möglich'
+    : diffStatus === 'inSync'
+      ? 'Synchron'
+      : `${diffSeconds > 0 ? '+' : ''}${diffSeconds}\u00A0s Abweichung`;
+
   return (
-    <Container maxWidth="lg" sx={{ py: 5 }}>
+    <Container maxWidth="md" sx={{ py: 5 }}>
       <Box sx={{ textAlign: 'center', mb: 5 }}>
         <Typography variant="h4" sx={{ color: INK }}>Zeitsynchronisation</Typography>
         <Typography variant="body1" sx={{ color: INK_MUTED, mt: 1 }}>PC-Zeit mit dem Messekoffer abgleichen</Typography>
       </Box>
 
-      <Grid container spacing={3} direction="column">
-        <Grid item xs={12} sx={{ display: 'flex' }}>
-          <Card sx={{ width: '100%', bgcolor: PANEL, p: 4, textAlign: 'center' }}>
-            <Box sx={{ display: 'inline-flex', width: 64, height: 64, borderRadius: '50%', bgcolor: BRAND_BG, alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-              <AccessTimeIcon sx={{ fontSize: 32, color: BRAND }} />
+      {/* ── Karte 1: PC-Zeit (Referenz) ───────────────────────────────────── */}
+      <Card sx={{ overflow: 'hidden', position: 'relative' }}>
+        <Box sx={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 5, bgcolor: BRAND }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: { xs: 3, md: 4 }, py: 2.5, pl: { xs: 4, md: 4.5 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.4 }}>
+            <Box sx={{ display: 'inline-flex', width: 40, height: 40, borderRadius: '10px', bgcolor: BRAND_BG, alignItems: 'center', justifyContent: 'center' }}>
+              <AccessTimeIcon sx={{ fontSize: 22, color: BRAND }} />
             </Box>
-            <Typography variant="h6" sx={{ color: INK }}>Aktuelle PC-Zeit</Typography>
-            <Typography variant="h4" sx={{
-              fontFamily: MONO_FONT, fontWeight: 700, bgcolor: '#12181f', color: '#7CC7E8',
-              py: 2, borderRadius: 2, mb: 0, letterSpacing: '1px'
-            }}>
-              {formatDateTime(pcTime)}
-            </Typography>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sx={{ display: 'flex' }}>
-          <Card sx={{ width: '100%', bgcolor: PANEL, p: 4, textAlign: 'center' }}>
-            <Box sx={{ display: 'inline-flex', width: 64, height: 64, borderRadius: '50%', bgcolor: ACCENT_BG, alignItems: 'center', justifyContent: 'center', mb: 2 }}>
-              <PrecisionManufacturingIcon sx={{ fontSize: 32, color: ACCENT }} />
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: INK, fontWeight: 700, lineHeight: 1.2 }}>Aktuelle PC-Zeit</Typography>
+              <Typography variant="caption" sx={{ color: INK_MUTED }}>Referenzquelle für den Abgleich</Typography>
             </Box>
-            <Typography variant="h6" sx={{ color: INK }}>Uhrzeit des Messekoffers</Typography>
-            {loadingDeviceTime ? (
-              <Box sx={{ py: 3 }}><CircularProgress size={32} sx={{ color: ACCENT }} /></Box>
-            ) : deviceTimeError ? (
-              <Alert severity="error" sx={{ mt: 1, borderRadius: 2 }}>{deviceTimeError}</Alert>
-            ) : (
-              <Typography variant="h4" sx={{
-                fontFamily: MONO_FONT, fontWeight: 700, bgcolor: '#12181f', color: '#F0B27A',
-                py: 2, borderRadius: 2, mb: 0, letterSpacing: '1px'
-              }}>
-                {deviceTime || '--:--:--'}
-              </Typography>
-            )}
-            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mt: 2 }}>
-              <Chip size="small" icon={<SyncIcon sx={{ fontSize: '14px !important' }} />} label={`Aktualisierung jede Sekunde`}
-                sx={{ bgcolor: SURFACE, color: INK_MUTED, fontWeight: 600, fontSize: '0.7rem' }} />
-              <Button variant="outlined" size="small" startIcon={<RefreshIcon />} onClick={() => fetchDeviceTime(true)} disabled={loadingDeviceTime}
-                sx={{ borderRadius: 20, textTransform: 'none', borderColor: BORDER, color: INK }}>
-                Jetzt aktualisieren
-              </Button>
-            </Box>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Card sx={{ mt: 4, p: 4, bgcolor: PANEL }}>
-        <Box sx={{ mb: 3 }}>
-          <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 2, flexWrap: 'wrap' }}>
-            <Typography variant="h6" sx={{ color: INK }}>
-              Netzwerkkonfiguration (Messekoffer)
-            </Typography>
-            {isMessekofferOnline !== null && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8 }}>
-                <Box sx={{
-                  width: 8,
-                  height: 8,
-                  borderRadius: '50%',
-                  bgcolor: isMessekofferOnline ? SUCCESS : DANGER,
-                  animation: isMessekofferOnline ? 'pulse 1.5s infinite' : 'none',
-                  '@keyframes pulse': {
-                    '0%': { opacity: 1, transform: 'scale(1)' },
-                    '50%': { opacity: 0.5, transform: 'scale(1.3)' },
-                    '100%': { opacity: 1, transform: 'scale(1)' }
-                  }
-                }} />
-                <Typography variant="caption" sx={{
-                  fontWeight: 700,
-                  color: isMessekofferOnline ? SUCCESS : DANGER
-                }}>
-                  {isMessekofferOnline ? 'mE180 Online' : 'mE180 Offline'}
-                </Typography>
-              </Box>
-            )}
           </Box>
-          <Box sx={{
-            mt: 1.5,
-            borderBottom: `3px solid ${isMessekofferOnline === true ? SUCCESS : isMessekofferOnline === false ? DANGER : BORDER}`,
-            width: '60px',
-            borderRadius: 4,
-            transition: 'all 0.3s ease'
-          }} />
+          <Chip size="small" label="Lokal" sx={{ bgcolor: BRAND_BG, color: BRAND, fontWeight: 700, fontSize: '0.7rem' }} />
+        </Box>
+        <Box sx={{
+          mx: { xs: 3, md: 4 }, mb: 3, ml: { xs: 4, md: 4.5 },
+          bgcolor: '#0d141b', borderRadius: 2, py: 2.6, textAlign: 'center',
+          boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.04)'
+        }}>
+          <Typography sx={{
+            fontFamily: MONO_FONT, fontWeight: 700, fontSize: { xs: '1.6rem', md: '2rem' },
+            color: '#7CC7E8', letterSpacing: '1.5px'
+          }}>
+            {formatDateTime(pcTime)}
+          </Typography>
+        </Box>
+      </Card>
+
+      {/* ── Differenz-Konnektor ───────────────────────────────────────────── */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', my: -1, position: 'relative', zIndex: 1 }}>
+        <Box sx={{
+          display: 'flex', alignItems: 'center', gap: 1, bgcolor: diffBg, border: `1px solid ${BORDER}`,
+          borderRadius: 20, px: 2, py: 0.7, boxShadow: '0 2px 6px rgba(17,24,39,0.06)'
+        }}>
+          <SyncIcon sx={{ fontSize: 17, color: diffColor }} />
+          <Typography variant="caption" sx={{ fontFamily: MONO_FONT, fontWeight: 700, color: diffColor }}>
+            {diffLabel}
+          </Typography>
+        </Box>
+      </Box>
+
+      {/* ── Karte 2: Messkoffer-Zeit ───────────────────────────────────────── */}
+      <Card sx={{ overflow: 'hidden', position: 'relative', mt: 3 }}>
+        <Box sx={{ position: 'absolute', top: 0, left: 0, bottom: 0, width: 5, bgcolor: ACCENT }} />
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: { xs: 3, md: 4 }, py: 2.5, pl: { xs: 4, md: 4.5 } }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.4 }}>
+            <Box sx={{ display: 'inline-flex', width: 40, height: 40, borderRadius: '10px', bgcolor: ACCENT_BG, alignItems: 'center', justifyContent: 'center' }}>
+              <PrecisionManufacturingIcon sx={{ fontSize: 22, color: ACCENT }} />
+            </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ color: INK, fontWeight: 700, lineHeight: 1.2 }}>Uhrzeit des Messekoffers</Typography>
+              <Typography variant="caption" sx={{ color: INK_MUTED, fontFamily: MONO_FONT }}>mE180 · {DEFAULT_MESSEKOFFER_IP}</Typography>
+            </Box>
+          </Box>
+          {isMessekofferOnline !== null && (
+            <Box sx={{
+              display: 'flex', alignItems: 'center', gap: 0.7, bgcolor: isMessekofferOnline ? SUCCESS_BG : DANGER_BG,
+              px: 1.3, py: 0.45, borderRadius: 20
+            }}>
+              <Box sx={{
+                width: 6, height: 6, borderRadius: '50%', bgcolor: isMessekofferOnline ? SUCCESS : DANGER,
+                animation: isMessekofferOnline ? 'pulse 1.5s infinite' : 'none',
+                '@keyframes pulse': {
+                  '0%': { opacity: 1, transform: 'scale(1)' },
+                  '50%': { opacity: 0.5, transform: 'scale(1.3)' },
+                  '100%': { opacity: 1, transform: 'scale(1)' }
+                }
+              }} />
+              <Typography variant="caption" sx={{ fontWeight: 700, color: isMessekofferOnline ? SUCCESS : DANGER, fontSize: '0.72rem' }}>
+                {isMessekofferOnline ? 'Online' : 'Offline'}
+              </Typography>
+            </Box>
+          )}
         </Box>
 
-        {isMessekofferOnline === true ? (
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={handleSync}
-            disabled={loading}
-            startIcon={!loading && <RefreshIcon />}
-            sx={{
-              bgcolor: SUCCESS,
-              borderRadius: 20,
-              fontSize: '1rem',
-              py: 1.5,
-              textTransform: 'none',
-              fontWeight: 700,
-              boxShadow: 'none',
-              transition: 'all 0.2s ease',
-              '&:hover': {
-                bgcolor: '#166B48',
-                boxShadow: 'none'
-              }
-            }}
-          >
-            {loading ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <CircularProgress size={20} sx={{ color: 'white' }} />
-                <span>Synchronisiere…</span>
-              </Box>
-            ) : (
-              'PC-Zeit auf Messekoffer übertragen'
-            )}
-          </Button>
-        ) : isMessekofferOnline === false ? (
-          <Button
-            variant="contained"
-            fullWidth
-            disabled
-            sx={{
-              bgcolor: BORDER,
-              color: INK_MUTED,
-              borderRadius: 20,
-              fontSize: '1rem',
-              py: 1.5,
-              textTransform: 'none',
-              fontWeight: 700,
-              boxShadow: 'none',
-              cursor: 'not-allowed'
-            }}
-          >
-            Synchronisation nicht möglich — Messekoffer offline
-          </Button>
-        ) : (
-          <Button
-            variant="contained"
-            fullWidth
-            disabled
-            sx={{
-              bgcolor: BORDER,
-              color: INK_MUTED,
-              borderRadius: 20,
-              fontSize: '1rem',
-              py: 1.5,
-              textTransform: 'none',
-              fontWeight: 700,
-              boxShadow: 'none'
-            }}
-          >
-            Verbindung wird geprüft…
-          </Button>
-        )}
+        <Box sx={{
+          mx: { xs: 3, md: 4 }, mb: 2, ml: { xs: 4, md: 4.5 },
+          bgcolor: '#0d141b', borderRadius: 2, py: 2.6, textAlign: 'center',
+          boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.04)'
+        }}>
+          {loadingDeviceTime ? (
+            <CircularProgress size={26} sx={{ color: ACCENT }} />
+          ) : deviceTimeError ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.8 }}>
+              <WifiOffIcon sx={{ fontSize: 20, color: '#E17B6B' }} />
+              <Typography variant="body2" sx={{ color: '#E17B6B', fontWeight: 600 }}>Nicht erreichbar</Typography>
+            </Box>
+          ) : (
+            <Typography sx={{
+              fontFamily: MONO_FONT, fontWeight: 700, fontSize: { xs: '1.6rem', md: '2rem' },
+              color: '#F0B27A', letterSpacing: '1.5px'
+            }}>
+              {deviceTime || '--:--:--'}
+            </Typography>
+          )}
+        </Box>
 
-        {message.text && (
-          <Alert severity={message.severity} sx={{ mt: 3, borderRadius: 2 }}>
-            {message.text}
-          </Alert>
-        )}
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', px: { xs: 3, md: 4 }, pb: 2.5, ml: { xs: 1, md: 0.5 } }}>
+          <Chip
+            size="small"
+            icon={<SyncIcon sx={{ fontSize: '13px !important' }} />}
+            label="Aktualisierung jede Sekunde"
+            sx={{ bgcolor: SURFACE, color: INK_MUTED, fontWeight: 600, fontSize: '0.7rem' }}
+          />
+          <Button variant="outlined" size="small" startIcon={<RefreshIcon />} onClick={() => fetchDeviceTime(true)} disabled={loadingDeviceTime}
+            sx={{ borderRadius: 20, textTransform: 'none', borderColor: BORDER, color: INK, fontSize: '0.78rem' }}>
+            Jetzt aktualisieren
+          </Button>
+        </Box>
+      </Card>
+
+      {/* ── Karte 3: Synchronisation & Netzwerk ───────────────────────────── */}
+      <Card sx={{ mt: 4, overflow: 'hidden' }}>
+        <Box sx={{ px: { xs: 3, md: 4 }, py: 2.5, borderBottom: `1px solid ${BORDER}`, bgcolor: SURFACE }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
+            <CloudSyncIcon sx={{ fontSize: 19, color: SUCCESS }} />
+            <Typography variant="subtitle1" sx={{ color: INK, fontWeight: 700 }}>Synchronisation</Typography>
+          </Box>
+        </Box>
+
+        <Box sx={{ px: { xs: 3, md: 4 }, py: 3.5 }}>
+          {isMessekofferOnline === true ? (
+            <Button
+              variant="contained"
+              fullWidth
+              onClick={handleSync}
+              disabled={loading}
+              startIcon={!loading && <RefreshIcon />}
+              sx={{
+                bgcolor: SUCCESS, borderRadius: 20, fontSize: '1rem', py: 1.5,
+                textTransform: 'none', fontWeight: 700, boxShadow: 'none',
+                '&:hover': { bgcolor: '#166B48', boxShadow: 'none' }
+              }}
+            >
+              {loading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CircularProgress size={20} sx={{ color: 'white' }} />
+                  <span>Synchronisiere…</span>
+                </Box>
+              ) : (
+                'PC-Zeit auf Messekoffer übertragen'
+              )}
+            </Button>
+          ) : isMessekofferOnline === false ? (
+            <Button variant="contained" fullWidth disabled sx={{
+              bgcolor: BORDER, color: INK_MUTED, borderRadius: 20, fontSize: '1rem', py: 1.5,
+              textTransform: 'none', fontWeight: 700, boxShadow: 'none', cursor: 'not-allowed'
+            }}>
+              Synchronisation nicht möglich — Messekoffer offline
+            </Button>
+          ) : (
+            <Button variant="contained" fullWidth disabled sx={{
+              bgcolor: BORDER, color: INK_MUTED, borderRadius: 20, fontSize: '1rem', py: 1.5,
+              textTransform: 'none', fontWeight: 700, boxShadow: 'none'
+            }}>
+              Verbindung wird geprüft…
+            </Button>
+          )}
+
+          {message.text && (
+            <Alert severity={message.severity} sx={{ mt: 2.5, borderRadius: 2 }}>
+              {message.text}
+            </Alert>
+          )}
+        </Box>
+
+        <Grid container sx={{ borderTop: `1px solid ${BORDER}` }}>
+          <Grid item xs={6} sx={{ p: { xs: 2.5, md: 3 }, borderRight: `1px solid ${BORDER}` }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.6 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 15, color: INK_MUTED }} />
+              <Typography variant="caption" sx={{ color: INK_MUTED, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', fontSize: '0.66rem' }}>
+                Messkoffer-IP
+              </Typography>
+            </Box>
+            <Typography sx={{ fontFamily: MONO_FONT, fontWeight: 700, color: INK, fontSize: '0.92rem' }}>
+              {DEFAULT_MESSEKOFFER_IP}
+            </Typography>
+          </Grid>
+          <Grid item xs={6} sx={{ p: { xs: 2.5, md: 3 } }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.6 }}>
+              <InfoOutlinedIcon sx={{ fontSize: 15, color: INK_MUTED }} />
+              <Typography variant="caption" sx={{ color: INK_MUTED, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', fontSize: '0.66rem' }}>
+                Backend-Endpunkt
+              </Typography>
+            </Box>
+            <Typography sx={{ fontFamily: MONO_FONT, fontWeight: 700, color: INK, fontSize: '0.92rem' }}>
+              {BACKEND_URL.replace('http://', '')}
+            </Typography>
+          </Grid>
+        </Grid>
       </Card>
     </Container>
   );
