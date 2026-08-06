@@ -406,7 +406,7 @@ const TimeSyncView = () => {
         </Box>
       </Card>
 
-      {/* ── Karte 3: Synchronisation & Netzwerk ───────────────────────────── */}
+      {/* ── Karte 3: Synchronisation ───────────────────────────────────────── */}
       <Card sx={{ mt: 4, overflow: 'hidden' }}>
         <Box sx={{ px: { xs: 3, md: 4 }, py: 2.5, borderBottom: `1px solid ${BORDER}`, bgcolor: SURFACE }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
@@ -460,31 +460,6 @@ const TimeSyncView = () => {
             </Alert>
           )}
         </Box>
-
-        <Grid container sx={{ borderTop: `1px solid ${BORDER}` }}>
-          <Grid item xs={6} sx={{ p: { xs: 2.5, md: 3 }, borderRight: `1px solid ${BORDER}` }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.6 }}>
-              <InfoOutlinedIcon sx={{ fontSize: 15, color: INK_MUTED }} />
-              <Typography variant="caption" sx={{ color: INK_MUTED, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', fontSize: '0.66rem' }}>
-                Messkoffer-IP
-              </Typography>
-            </Box>
-            <Typography sx={{ fontFamily: MONO_FONT, fontWeight: 700, color: INK, fontSize: '0.92rem' }}>
-              {DEFAULT_MESSEKOFFER_IP}
-            </Typography>
-          </Grid>
-          <Grid item xs={6} sx={{ p: { xs: 2.5, md: 3 } }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.8, mb: 0.6 }}>
-              <InfoOutlinedIcon sx={{ fontSize: 15, color: INK_MUTED }} />
-              <Typography variant="caption" sx={{ color: INK_MUTED, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.4px', fontSize: '0.66rem' }}>
-                Backend-Endpunkt
-              </Typography>
-            </Box>
-            <Typography sx={{ fontFamily: MONO_FONT, fontWeight: 700, color: INK, fontSize: '0.92rem' }}>
-              {BACKEND_URL.replace('http://', '')}
-            </Typography>
-          </Grid>
-        </Grid>
       </Card>
     </Container>
   );
