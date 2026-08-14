@@ -87,11 +87,11 @@ const theme = createTheme({
 });
 
 // =================== LIENS ===================
-const BACKEND_URL = 'http://192.168.1.20:4001';
-const APP_URL = 'http://192.168.1.20:5000/';
-const GRAFANA_URL = 'http://192.168.1.20:3000/d/adkdpz6/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=CH1%20a&refresh=5s';
-const CONFIG_URL = 'http://192.168.1.20:5000?view=config';
-const ENERGY_URL = 'http://192.168.1.20:5000?view=energy';
+const BACKEND_URL = 'http://192.168.1.21:4001';
+const APP_URL = 'http://192.168.1.21:5000/';
+const GRAFANA_URL = 'http://192.168.1.21:3000/d/adkdpz6/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=CH1%20a&refresh=5s';
+const CONFIG_URL = 'http://192.168.1.21:5000?view=config';
+const ENERGY_URL = 'http://192.168.1.21:5000?view=energy';
 const DEFAULT_MESSEKOFFER_IP = '192.168.1.7';
 
 // ✅ Fréquence de lecture de l'heure du Messkoffer : chaque seconde (au lieu
