@@ -91,7 +91,7 @@ const theme = createTheme({
 // =================== LIENS ===================
 const BACKEND_URL = 'http://192.168.1.20:4001';
 const APP_URL = 'http://192.168.1.20:5000/';
-const GRAFANA_URL = 'http://localhost:3000/d/adrxt9v/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=CH1%20a&refresh=5s';
+const GRAFANA_URL = 'http://192.168.1.20:3000/d/adrxt9v/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=CH1%20a&refresh=5s';
 const CONFIG_URL = 'http://192.168.1.20:5000?view=config';
 const ENERGY_URL = 'http://192.168.1.20:5000?view=energy';
 // ✅ Vue Sensor-Bezeichnung développée dans l'app mego elle-même (App_20sensors.jsx)
@@ -604,50 +604,54 @@ function App() {
   );
 
   // ── Live Daten ────────────────────────────────────────────────────────────
+  // ✅ RENOMMÉ : "Daten verwalten" → "Daten verwalten (mE180)" et
+  // "Kundendaten" → "Rogowski Spulen" (les liens/actions restent inchangés).
   const liveDatenView = (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <SectionHeader title="Live Daten" subtitle="Wählen Sie den gewünschten Bereich." />
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
         <NavCard
           icon={<AnalyticsIcon sx={{ fontSize: 40, color: BRAND }} />} iconBg={BRAND_BG} accent={BRAND}
-          title="Daten verwalten" desc="Live-Stromdaten analysieren"
+          title="Daten verwalten (mE180)" desc="Live-Stromdaten analysieren"
           onClick={() => window.location.href = APP_URL}
         />
         <NavCard
           icon={<DeviceHubIcon sx={{ fontSize: 40, color: BRAND }} />} iconBg={BRAND_BG} accent={BRAND}
-          title="Kundendaten" desc="Sensor-Zuordnung verwalten"
+          title="Rogowski Spulen" desc="Sensor-Zuordnung verwalten"
           onClick={() => window.location.href = MAPPING_URL}
         />
       </Box>
       <InfoCard
-        leftIcon={<SpeedIcon />} leftTitle="Daten verwalten" leftColor={BRAND}
+        leftIcon={<SpeedIcon />} leftTitle="Daten verwalten (mE180)" leftColor={BRAND}
         leftContent="Greifen Sie in Echtzeit auf alle Messkanäle zu: Strom, Wirkleistung, Spannung und Energie werden kontinuierlich erfasst und live dargestellt — für eine präzise Überwachung Ihrer industriellen Anlage."
-        rightIcon={<DeviceHubIcon />} rightTitle="Kundendaten" rightColor={BRAND}
+        rightIcon={<DeviceHubIcon />} rightTitle="Rogowski Spulen" rightColor={BRAND}
         rightContent="Behalten Sie die Zuordnung Ihrer Sensoren im Blick: jeder Sensor und seine Kanäle werden übersichtlich dargestellt — für eine klare Nachverfolgung Ihrer Messpunkte."
       />
     </Container>
   );
 
   // ── Kanäle konfigurieren ──────────────────────────────────────────────────
+  // ✅ RENOMMÉ : "Kanal Konfiguration" → "Messkoffer (mego)" et
+  // "Sensor" → "Sensoren (Rogowski Spulen)".
   const kanalKonfigurationView = (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <SectionHeader title="Kanäle konfigurieren" subtitle="Wählen Sie den gewünschten Bereich." />
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
         <NavCard
           icon={<SettingsIcon sx={{ fontSize: 40, color: BRAND }} />} iconBg={BRAND_BG} accent={BRAND}
-          title="Kanal Konfiguration" desc="Parameter der Messkanäle anpassen"
+          title="Messkoffer (mego)" desc="Parameter der Messkanäle anpassen"
           onClick={() => window.location.href = CONFIG_URL}
         />
         <NavCard
           icon={<DeviceHubIcon sx={{ fontSize: 40, color: BRAND }} />} iconBg={BRAND_BG} accent={BRAND}
-          title="Sensor" desc="Sensor-Bezeichnung verwalten"
+          title="Sensoren (Rogowski Spulen)" desc="Sensor-Bezeichnung verwalten"
           onClick={() => window.location.href = SENSOR_CONFIG_URL}
         />
       </Box>
       <InfoCard
-        leftIcon={<SettingsIcon />} leftTitle="Kanal Konfiguration" leftColor={BRAND}
+        leftIcon={<SettingsIcon />} leftTitle="Messkoffer (mego)" leftColor={BRAND}
         leftContent="Definieren Sie die technischen Parameter jedes Messkanals: Bezeichnung, Schwellwert und Höchstwert lassen sich individuell anpassen — für eine präzise und zuverlässige Messgenauigkeit Ihrer Anlage."
-        rightIcon={<DeviceHubIcon />} rightTitle="Sensor" rightColor={BRAND}
+        rightIcon={<DeviceHubIcon />} rightTitle="Sensoren (Rogowski Spulen)" rightColor={BRAND}
         rightContent="Vergeben Sie eine kundenspezifische Bezeichnung für jeden Sensor und Kanal — für eine klare, verständliche Kennzeichnung in Ihrer Kundendokumentation."
       />
     </Container>
