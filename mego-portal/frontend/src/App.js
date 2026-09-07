@@ -91,7 +91,7 @@ const theme = createTheme({
 // =================== LIENS ===================
 const BACKEND_URL = 'http://192.168.1.20:4001';
 const APP_URL = 'http://192.168.1.20:5000/';
-const GRAFANA_URL = 'http://192.168.1.20:3000/d/adrxt9v/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=CH1%20a&refresh=5s';
+const GRAFANA_URL = 'http://192.168.1.20:3000/d/adrxt9v/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=PH1%20a&refresh=5s';
 const CONFIG_URL = 'http://192.168.1.20:5000?view=config';
 const ENERGY_URL = 'http://192.168.1.20:5000?view=energy';
 // ✅ Vue Sensor-Bezeichnung développée dans l'app mego elle-même (App_20sensors.jsx)
@@ -606,6 +606,8 @@ function App() {
   // ── Live Daten ────────────────────────────────────────────────────────────
   // ✅ RENOMMÉ : "Daten verwalten" → "Daten verwalten (mE180)" et
   // "Kundendaten" → "Rogowski Spulen" (les liens/actions restent inchangés).
+  // ✅ Les deux petites phrases sous les titres sont désormais identiques :
+  // "Live-Stromdaten analysieren".
   const liveDatenView = (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <SectionHeader title="Live Daten" subtitle="Wählen Sie den gewünschten Bereich." />
@@ -617,7 +619,7 @@ function App() {
         />
         <NavCard
           icon={<DeviceHubIcon sx={{ fontSize: 40, color: BRAND }} />} iconBg={BRAND_BG} accent={BRAND}
-          title="Rogowski Spulen" desc="Sensor-Zuordnung verwalten"
+          title="Rogowski Spulen" desc="Live-Stromdaten analysieren"
           onClick={() => window.location.href = MAPPING_URL}
         />
       </Box>
@@ -631,7 +633,7 @@ function App() {
   );
 
   // ── Kanäle konfigurieren ──────────────────────────────────────────────────
-  // ✅ RENOMMÉ : "Kanal Konfiguration" → "Messkoffer (mego)" et
+  // ✅ RENOMMÉ : "Kanal Konfiguration" → "Messkoffer (mE180)" et
   // "Sensor" → "Sensoren (Rogowski Spulen)".
   const kanalKonfigurationView = (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -639,7 +641,7 @@ function App() {
       <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, flexWrap: 'wrap' }}>
         <NavCard
           icon={<SettingsIcon sx={{ fontSize: 40, color: BRAND }} />} iconBg={BRAND_BG} accent={BRAND}
-          title="Messkoffer (mego)" desc="Parameter der Messkanäle anpassen"
+          title="Messkoffer (mE180)" desc="Parameter der Messkanäle anpassen"
           onClick={() => window.location.href = CONFIG_URL}
         />
         <NavCard
@@ -649,7 +651,7 @@ function App() {
         />
       </Box>
       <InfoCard
-        leftIcon={<SettingsIcon />} leftTitle="Messkoffer (mego)" leftColor={BRAND}
+        leftIcon={<SettingsIcon />} leftTitle="Messkoffer (mE180)" leftColor={BRAND}
         leftContent="Definieren Sie die technischen Parameter jedes Messkanals: Bezeichnung, Schwellwert und Höchstwert lassen sich individuell anpassen — für eine präzise und zuverlässige Messgenauigkeit Ihrer Anlage."
         rightIcon={<DeviceHubIcon />} rightTitle="Sensoren (Rogowski Spulen)" rightColor={BRAND}
         rightContent="Vergeben Sie eine kundenspezifische Bezeichnung für jeden Sensor und Kanal — für eine klare, verständliche Kennzeichnung in Ihrer Kundendokumentation."
