@@ -87,12 +87,13 @@ const theme = createTheme({
 // =================== LIENS ===================
 const BACKEND_URL = 'http://192.168.1.20:4001';
 const APP_BASE    = 'http://192.168.1.20:5000';
-const GRAFANA_URL = 'http://192.168.1.20:3000/d/adkdpz6/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=CH1%20a&refresh=5s';
+const GRAFANA_URL = 'http://192.168.1.20:3000/d/adkdpz6/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=PH1%20a&refresh=5s';
 
-// ✅ Grafana pour un contrôleur : on passe son tag InfluxDB "Device" à la
-// variable de dashboard "Device" (à créer dans Grafana). Tant que cette
-// variable n'existe pas, Grafana ignore simplement le paramètre.
-const grafanaUrl = (ctrl) => ctrl?.device ? `${GRAFANA_URL}&var-Device=${encodeURIComponent(ctrl.device)}` : GRAFANA_URL;
+// ✅ Grafana : un seul dashboard pour les deux contrôleurs. La variable
+// "Tabelle" du dashboard choisit la table InfluxDB :
+//   Controller 1 -> "mego", Controller 2 -> "mego1"
+const GRAFANA_TABLES = { '1': 'mego', '2': 'mego1' };
+const grafanaUrl = (ctrl) => `${GRAFANA_URL}&var-Tabelle=${GRAFANA_TABLES[ctrl?.num] || 'mego'}`;
 
 // ✅ Lien vers Live Daten pour un contrôleur donné (et une vue optionnelle).
 const appUrl = (controllerNum, view) =>
