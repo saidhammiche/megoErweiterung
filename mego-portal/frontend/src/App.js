@@ -87,7 +87,7 @@ const theme = createTheme({
 // =================== LIENS ===================
 const BACKEND_URL = 'http://192.168.1.20:4001';
 const APP_BASE    = 'http://192.168.1.20:5000';
-const GRAFANA_URL = 'http://192.168.1.20:3000/d/adkdpz6/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=PH1%20a&refresh=5s';
+const GRAFANA_URL = 'http://192.168.1.20:3000/d/adrxt9v/energie?from=now-30m&to=now&timezone=browser&var-Kanal=PH1%20a&refresh=5s';
 
 // ✅ Grafana : un seul dashboard pour les deux contrôleurs. La variable
 // "Tabelle" du dashboard choisit la table InfluxDB :
