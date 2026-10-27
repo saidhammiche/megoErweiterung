@@ -89,15 +89,15 @@ const theme = createTheme({
 });
 
 // =================== LIENS ===================
-const BACKEND_URL = 'http://192.168.1.20:4001';
-const APP_URL = 'http://192.168.1.20:5000/';
-const GRAFANA_URL = 'http://192.168.1.20:3000/d/adrxt9v/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=PH1%20a&refresh=5s';
-const CONFIG_URL = 'http://192.168.1.20:5000?view=config';
-const ENERGY_URL = 'http://192.168.1.20:5000?view=energy';
+const BACKEND_URL = 'http://172.16.1.177:4001';
+const APP_URL = 'http://172.16.1.177:5000/';
+const GRAFANA_URL = 'http://172.16.1.177:3000/d/adrxt9v/energie?orgId=1&from=now-30m&to=now&timezone=browser&var-Kanal=PH1%20a&refresh=5s';
+const CONFIG_URL = 'http://172.16.1.177:5000?view=config';
+const ENERGY_URL = 'http://172.16.1.177:5000?view=energy';
 // ✅ Vue Sensor-Bezeichnung développée dans l'app mego elle-même (App_20sensors.jsx)
-const SENSOR_CONFIG_URL = 'http://192.168.1.20:5000?view=sensorconfig';
+const SENSOR_CONFIG_URL = 'http://172.16.1.177:5000?view=sensorconfig';
 // ✅ Lien Mapping : accessible depuis la carte "Kundendaten" sur la page "Live Daten"
-const MAPPING_URL = 'http://192.168.1.20:5000?view=mapping';
+const MAPPING_URL = 'http://172.16.1.177:5000?view=mapping';
 const DEFAULT_MESSEKOFFER_IP = '192.168.1.7';
 
 // ✅ Fréquence de lecture de l'heure du Messkoffer : chaque seconde, pour un
