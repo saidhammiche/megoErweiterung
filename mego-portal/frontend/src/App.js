@@ -162,7 +162,7 @@ const MessekofferStatusNavbar = () => {
           <WifiOffIcon sx={{ color: DANGER, fontSize: 17 }} />
         )}
         <Typography variant="caption" sx={{ fontWeight: 700, color: isOnline ? SUCCESS : DANGER, letterSpacing: '0.2px' }}>
-          mE180 {isOnline ? 'Online' : 'Offline'}
+          mEgo{isOnline ? 'Online' : 'Offline'}
         </Typography>
         <Box sx={{
           width: 7,
@@ -574,7 +574,7 @@ function App() {
   const mainView = (
     <Box sx={{ py: 6, position: 'relative', minHeight: '80vh' }}>
       <Box sx={{ textAlign: 'center', mb: 5 }}>
-        <Typography variant="h4" sx={{ color: INK }}>Willkommen im lokalen mE2go-Portal</Typography>
+        <Typography variant="h4" sx={{ color: INK }}>Willkommen im lokalen mE 4.0-Portal</Typography>
         <Typography variant="h6" sx={{ color: INK_MUTED, fontWeight: 500, mt: 0.5 }}>Was wollen Sie machen?</Typography>
       </Box>
       <Box sx={{ maxWidth: '1400px', mx: 'auto', px: { xs: 2, sm: 4, md: 6 } }}>
