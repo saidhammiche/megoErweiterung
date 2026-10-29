@@ -9,7 +9,7 @@ app.use(cors({ origin: '*', methods: ['GET', 'POST', 'OPTIONS'] }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-const MESSEKOPFER_IP = '192.168.1.7';
+const MESSEKOPFER_IP = '10.0.5.233';
 const MESSEKOPFER_ID = 51105;
 
 // Logger

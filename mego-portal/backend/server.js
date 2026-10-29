@@ -9,8 +9,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // ==================== CONTRÔLEURS mE180 ====================
-// Controller 1 : 192.168.1.7 (ID 51105)
-// Controller 2 : 192.168.1.8 (ID à définir dans le .env : MESSE_ID_2)
+// Controller 1 : 10.0.5.233 (ID 51105)
+// Controller 2 : 10.0.5.234 (ID à définir dans le .env : MESSE_ID_2)
 // Le contrôleur 2 n'est activé que si MESSE_ID_2 est défini.
 const CONTROLLERS = {};
 
@@ -19,8 +19,8 @@ function addController(num, ip, id, device, label) {
   CONTROLLERS[num] = { num, ip, id, device, label: label || `Controller ${num}` };
 }
 
-addController('1', process.env.MESSE_IP   || '192.168.1.7', process.env.MESSE_ID   || 51105, process.env.MEGO4_DEVICE   || 'mE180',   process.env.MESSE_LABEL);
-addController('2', process.env.MESSE_IP_2 || '192.168.1.8', process.env.MESSE_ID_2 || 51105,          process.env.MEGO4_DEVICE_2 || 'mE180_2', process.env.MESSE_LABEL_2);
+addController('1', process.env.MESSE_IP   || '10.0.5.233', process.env.MESSE_ID   || 51105, process.env.MEGO4_DEVICE   || 'mE180',   process.env.MESSE_LABEL);
+addController('2', process.env.MESSE_IP_2 || '10.0.5.234', process.env.MESSE_ID_2 || 51105, process.env.MEGO4_DEVICE_2 || 'mE180_2', process.env.MESSE_LABEL_2);
 
 // Retrouve le contrôleur demandé (?controller=1|2 ou dans le body). Par défaut : 1.
 function getCtrl(req, res) {
@@ -31,6 +31,24 @@ function getCtrl(req, res) {
     return null;
   }
   return ctrl;
+}
+
+// ==================== FUSEAU HORAIRE ====================
+// Offset au format JS getTimezoneOffset() : -60 en hiver (CET), -120 en été (CEST).
+// Calculé pour Europe/Berlin quel que soit le fuseau du serveur (souvent UTC).
+// Changement heure d'été / hiver géré automatiquement.
+const TIMEZONE = process.env.TIMEZONE || 'Europe/Berlin';
+
+function getZoneOffset(date = new Date(), timeZone = TIMEZONE) {
+  const local = new Date(date.toLocaleString('en-US', { timeZone }));
+  const utc   = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+  return Math.round((utc - local) / 60000); // ex. -60 en hiver, -120 en été
+}
+
+// Priorité : ?tz= envoyé par le navigateur, sinon offset Europe/Berlin.
+function getTzOffset(req) {
+  const tz = parseInt(req.query.tz ?? req.body?.tz, 10);
+  return Number.isFinite(tz) ? tz : getZoneOffset();
 }
 
 // Logger
@@ -51,7 +69,7 @@ app.get('/ping-messekoffer', async (req, res) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 3000);
 
-    const response = await fetch(`http://${ctrl.ip}/get_sys_config.cgi?id=${ctrl.id}&sys=time&TimezoneOffset=-120`, {
+    const response = await fetch(`http://${ctrl.ip}/get_sys_config.cgi?id=${ctrl.id}&sys=time&TimezoneOffset=${getTzOffset(req)}`, {
       method: 'GET',
       signal: controller.signal
     });
@@ -73,7 +91,8 @@ app.get('/ping', (req, res) => {
 app.get('/time', async (req, res) => {
   const ctrl = getCtrl(req, res); if (!ctrl) return;
   try {
-    const url = `http://${ctrl.ip}/get_sys_config.cgi?id=${ctrl.id}&sys=time&TimezoneOffset=-120`;
+    const tzOffset = getTzOffset(req);
+    const url = `http://${ctrl.ip}/get_sys_config.cgi?id=${ctrl.id}&sys=time&TimezoneOffset=${tzOffset}`;
     const response = await axios.get(url, { timeout: 5000 });
 
     let messekofferTime = null;
@@ -92,7 +111,8 @@ app.get('/time', async (req, res) => {
     res.json({
       controller: ctrl.num,
       datetime: new Date().toISOString(),
-      messekoffer_datetime: messekofferTime
+      messekoffer_datetime: messekofferTime,
+      timezone_offset: tzOffset
     });
   } catch (error) {
     console.error(`❌ ${ctrl.label} Erreur lecture:`, error.message);
@@ -135,6 +155,7 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(' Serveur Zeit-Sync démarré');
   console.log('='.repeat(50));
   console.log(` Port: ${PORT}`);
+  console.log(` Fuseau: ${TIMEZONE} → TimezoneOffset=${getZoneOffset()} (serveur: ${new Date().getTimezoneOffset()})`);
   Object.values(CONTROLLERS).forEach(c => console.log(` ${c.label}: ${c.ip} (ID ${c.id})`));
   if (!CONTROLLERS['2']) console.log(' Controller 2: deaktiviert (MESSE_ID_2 fehlt im .env)');
   console.log('='.repeat(50) + '\n');

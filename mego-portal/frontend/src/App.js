@@ -85,9 +85,9 @@ const theme = createTheme({
 });
 
 // =================== LIENS ===================
-const BACKEND_URL = 'http://192.168.1.20:4001';
-const APP_BASE    = 'http://192.168.1.20:5000';
-const GRAFANA_URL = 'http://192.168.1.20:3000/d/adrxt9v/energie?from=now-30m&to=now&timezone=browser&var-Kanal=PH1%20a&refresh=5s';
+const BACKEND_URL = 'http://10.0.5.232:4001';
+const APP_BASE    = 'http://10.0.5.232:5000';
+const GRAFANA_URL = 'http://10.0.5.232:3000/d/adrxt9v/energie?from=now-30m&to=now&timezone=browser&var-Kanal=PH1%20a&refresh=5s';
 
 // ✅ Grafana : un seul dashboard pour les deux contrôleurs. La variable
 // "Tabelle" du dashboard choisit la table InfluxDB :
@@ -571,7 +571,7 @@ function App() {
   const homeView = (
     <Box sx={{ py: 6, position: 'relative', minHeight: '80vh' }}>
       <Box sx={{ textAlign: 'center', mb: 5 }}>
-        <Typography variant="h4" sx={{ color: INK }}>Willkommen im lokalen mE2go-Portal</Typography>
+        <Typography variant="h4" sx={{ color: INK }}>Willkommen im lokalen mE 4.0-Portal</Typography>
         <Typography variant="h6" sx={{ color: INK_MUTED, fontWeight: 500, mt: 0.5 }}>Welchen Controller möchten Sie öffnen?</Typography>
       </Box>
       <Box sx={{ maxWidth: '1400px', mx: 'auto', px: { xs: 2, sm: 4, md: 6 } }}>
@@ -610,7 +610,7 @@ function App() {
   const mainView = (
     <Box sx={{ py: 6, position: 'relative', minHeight: '80vh' }}>
       <Box sx={{ textAlign: 'center', mb: 5 }}>
-        <Typography variant="h4" sx={{ color: INK }}>Willkommen im lokalen mE2go-Portal</Typography>
+        <Typography variant="h4" sx={{ color: INK }}>Willkommen im lokalen mE 4.0-Portal</Typography>
         <Typography variant="h6" sx={{ color: INK_MUTED, fontWeight: 500, mt: 0.5 }}>Was wollen Sie machen?</Typography>
         {controllerBadge}
       </Box>
